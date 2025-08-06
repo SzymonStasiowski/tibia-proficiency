@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { weaponCategories, communityStats } from '@/lib/mockData'
+import { useWeaponCategories, useCommunityStats } from '@/hooks'
 import WeaponCategoryCard from '@/components/WeaponCategoryCard'
 import CommunityStats from '@/components/CommunityStats'
 import DonationCard from '@/components/DonationCard'
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { data: categories, isLoading: categoriesLoading } = useWeaponCategories()
+  const { data: stats, isLoading: statsLoading } = useCommunityStats()
 
   const handleCategoryClick = (categoryId: string) => {
     window.location.href = `/category/${categoryId}`
@@ -15,8 +17,18 @@ export default function Home() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement search functionality
-    console.log('Search for:', searchQuery)
+    if (searchQuery.trim()) {
+      // Simple search - redirect to search results page (we'll create this)
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
+    }
+  }
+
+  const handleRandomWeapon = () => {
+    // For now, just pick a random category
+    if (categories && categories.length > 0) {
+      const randomCategory = categories[Math.floor(Math.random() * categories.length)]
+      window.location.href = `/category/${randomCategory.id}`
+    }
   }
 
   return (
@@ -53,18 +65,12 @@ export default function Home() {
 
           {/* Quick Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold transition-colors shadow-lg">
-              📊 View Results
-            </button>
-            <button className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-semibold transition-colors shadow-lg">
+            <button 
+              onClick={handleRandomWeapon}
+              className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-semibold transition-colors shadow-lg"
+            >
               🎲 Random Weapon
             </button>
-            <a 
-              href="/weapon/abyss-hammer"
-              className="px-8 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-full font-semibold transition-colors shadow-lg text-center"
-            >
-              🔨 Try Abyss Hammer
-            </a>
           </div>
         </div>
       </div>
@@ -75,58 +81,45 @@ export default function Home() {
           Choose Your Weapon Type
         </h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-          {weaponCategories.map((category) => (
-            <WeaponCategoryCard
-              key={category.id}
-              category={category}
-              onClick={() => handleCategoryClick(category.id)}
-            />
-          ))}
-        </div>
+        {categoriesLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-4">Loading weapon categories...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            {categories?.map((category) => (
+              <WeaponCategoryCard
+                key={category.id}
+                category={category}
+                onClick={() => handleCategoryClick(category.id)}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Community Stats and Donation */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
           <div className="lg:col-span-2">
-            <CommunityStats stats={communityStats} />
+            {statsLoading ? (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-gray-600 mt-4">Loading community stats...</p>
+              </div>
+            ) : stats ? (
+              <CommunityStats stats={stats} />
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center">
+                <p className="text-gray-600">Unable to load community stats</p>
+              </div>
+            )}
           </div>
           <div>
             <DonationCard />
           </div>
         </div>
 
-        {/* Recent Activity Section */}
-        <div className="mt-12 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            🌟 Recent Activity
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Most Voted Today */}
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <div className="text-2xl mb-2">🏆</div>
-              <h3 className="font-semibold text-blue-700 dark:text-blue-300">Most Voted Today</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Falcon Battleaxe</p>
-              <p className="text-xs text-gray-500">347 votes</p>
-            </div>
 
-            {/* Latest Addition */}
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <div className="text-2xl mb-2">✨</div>
-              <h3 className="font-semibold text-green-700 dark:text-green-300">Latest Addition</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Soulmaimer</p>
-              <p className="text-xs text-gray-500">Added 2 hours ago</p>
-            </div>
-
-            {/* Hot Debate */}
-            <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-              <div className="text-2xl mb-2">🔥</div>
-              <h3 className="font-semibold text-orange-700 dark:text-orange-300">Hot Debate</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Crystalline Sword</p>
-              <p className="text-xs text-gray-500">89% vs 11% split</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Footer */}
@@ -137,7 +130,7 @@ export default function Home() {
               Made with ❤️ for the Tibia community
             </p>
             <p className="text-sm mb-4">
-              Currently tracking {weaponCategories.reduce((total, cat) => total + cat.weaponCount, 0)} weapons across {weaponCategories.length} categories
+              Currently tracking {categories?.reduce((total, cat) => total + cat.weaponCount, 0) || 0} weapons across {categories?.length || 0} categories
             </p>
             
             {/* Footer Donation Note */}

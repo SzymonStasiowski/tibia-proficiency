@@ -1,8 +1,17 @@
-import { CommunityStats as StatsType } from '@/lib/mockData'
 import { formatNumber } from '@/lib/utils'
 
+interface CommunityStats {
+  totalVotes: number
+  mostVotedWeapon: {
+    name: string
+    votes: number
+  } | null
+  newestWeapons: number
+  trendingDebate: string
+}
+
 interface CommunityStatsProps {
-  stats: StatsType
+  stats: CommunityStats
 }
 
 export default function CommunityStats({ stats }: CommunityStatsProps) {
@@ -16,26 +25,31 @@ export default function CommunityStats({ stats }: CommunityStatsProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-green-500 font-bold text-lg">
-              {formatNumber(stats.totalVotesToday)}
+              {formatNumber(stats.totalVotes)}
             </span>
             <span className="text-gray-600 dark:text-gray-400 text-sm">
-              votes cast today
+              total votes
             </span>
           </div>
           
           <div className="flex items-center gap-2">
             <span className="text-blue-500 font-semibold">Most voted:</span>
             <span className="text-gray-700 dark:text-gray-300">
-              {stats.mostVotedWeapon}
+              {stats.mostVotedWeapon?.name || 'No votes yet'}
+              {stats.mostVotedWeapon && (
+                <span className="text-xs text-gray-500 ml-1">
+                  ({stats.mostVotedWeapon.votes} votes)
+                </span>
+              )}
             </span>
           </div>
         </div>
         
         <div className="space-y-3">
           <div>
-            <span className="text-purple-500 font-semibold block mb-1">Newest weapons:</span>
+            <span className="text-purple-500 font-semibold block mb-1">Total weapons:</span>
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              {stats.recentWeapons.join(", ")}
+              {formatNumber(stats.newestWeapons)} weapons available
             </div>
           </div>
           

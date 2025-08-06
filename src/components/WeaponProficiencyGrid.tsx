@@ -1,33 +1,78 @@
-import { Weapon, Perk } from '@/lib/mockData'
+import { Weapon, Perk } from '@/hooks/useWeapons'
+import { Perk as DatabasePerk } from '@/hooks/usePerks'
 import PerkSlot from './PerkSlot'
 import PerkIcon from './PerkIcon'
 import { useState } from 'react'
 
+// Database Perk Slot Component
+interface DatabasePerkSlotProps {
+  perk: DatabasePerk
+  isSelected?: boolean
+  onClick?: () => void
+}
+
+function DatabasePerkSlot({ perk, isSelected = false, onClick }: DatabasePerkSlotProps) {
+  const [showTooltip, setShowTooltip] = useState(false)
+
+  return (
+    <div className="relative">
+      {/* Main Perk Container */}
+      <div
+        className={`
+          relative w-16 h-16 cursor-pointer transition-all duration-300
+          ${isSelected ? 'hover:scale-105' : 'grayscale hover:scale-105 hover:grayscale-0'}
+        `}
+        onClick={onClick}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        {/* Main Icon with Fallback */}
+        <PerkIcon
+          iconUrl={perk.main_icon_url || ''}
+          altText={perk.name}
+          overlayIcon={perk.type_icon_url}
+        />
+      </div>
+
+      {/* Tooltip */}
+      {showTooltip && (
+        <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg border border-gray-700 whitespace-nowrap shadow-lg">
+          <div className="font-semibold text-yellow-300">{perk.name}</div>
+          <div className="text-gray-300">{perk.description}</div>
+          <div className="text-xs text-gray-500 mt-1">{perk.vote_count} votes</div>
+          {/* Tooltip arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface WeaponProficiencyGridProps {
   weapon: Weapon
-  onPerkSelect?: (slotIndex: number, perkIndex: number) => void
-  selectedPerks?: { [slotIndex: number]: number } // slotIndex -> perkIndex
+  perks: DatabasePerk[]
+  onPerkSelect?: (perkId: string) => void
+  selectedPerks?: string[] // Array of perk IDs
 }
 
 export default function WeaponProficiencyGrid({ 
   weapon, 
+  perks,
   onPerkSelect, 
-  selectedPerks = {} 
+  selectedPerks = [] 
 }: WeaponProficiencyGridProps) {
-  const [localSelectedPerks, setLocalSelectedPerks] = useState<{ [slotIndex: number]: number }>(selectedPerks)
-
-  const handlePerkClick = (slotIndex: number, perkIndex: number) => {
-    const newSelection = { ...localSelectedPerks }
-    
-    // If clicking the same perk, deselect it
-    if (newSelection[slotIndex] === perkIndex) {
-      delete newSelection[slotIndex]
-    } else {
-      newSelection[slotIndex] = perkIndex
+  // Group perks by tier level (1-7 slots)
+  const perksByTier = perks.reduce((acc, perk) => {
+    const tier = perk.tier_level
+    if (!acc[tier]) {
+      acc[tier] = []
     }
-    
-    setLocalSelectedPerks(newSelection)
-    onPerkSelect?.(slotIndex, perkIndex)
+    acc[tier].push(perk)
+    return acc
+  }, {} as Record<number, DatabasePerk[]>)
+
+  const handlePerkClick = (perkId: string) => {
+    onPerkSelect?.(perkId)
   }
 
   return (
@@ -35,14 +80,14 @@ export default function WeaponProficiencyGrid({
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <PerkIcon
-          iconUrl={weapon.image_url}
+          iconUrl={weapon.image_url || ''}
           altText={weapon.name}
           className="p-1"
         />
         <div>
           <h2 className="text-2xl font-bold text-white">{weapon.name}</h2>
           <p className="text-gray-400">{weapon.weapon_type}</p>
-          <p className="text-sm text-gray-500">{weapon.proficiency_perks_by_slot.length} perk slots available</p>
+          <p className="text-sm text-gray-500">{perks.length} perks available across {Object.keys(perksByTier).length} tiers</p>
         </div>
       </div>
 
@@ -60,17 +105,18 @@ export default function WeaponProficiencyGrid({
       {/* Perk Slots Grid */}
       <div className="grid grid-cols-7 gap-4">
         {Array.from({ length: 7 }, (_, slotIndex) => {
-          const slotPerks = weapon.proficiency_perks_by_slot[slotIndex] || []
+          const tier = slotIndex // Database tiers are 0-indexed, slots are 0-6 displayed as 1-7
+          const tierPerks = perksByTier[tier] || []
           
           return (
             <div key={slotIndex} className="space-y-2">
-              {slotPerks.length > 0 ? (
-                slotPerks.map((perk, perkIndex) => (
-                  <PerkSlot
-                    key={`${slotIndex}-${perkIndex}`}
+              {tierPerks.length > 0 ? (
+                tierPerks.map((perk) => (
+                  <DatabasePerkSlot
+                    key={perk.id}
                     perk={perk}
-                    isSelected={localSelectedPerks[slotIndex] === perkIndex}
-                    onClick={() => handlePerkClick(slotIndex, perkIndex)}
+                    isSelected={selectedPerks.includes(perk.id)}
+                    onClick={() => handlePerkClick(perk.id)}
                   />
                 ))
               ) : (
@@ -83,23 +129,22 @@ export default function WeaponProficiencyGrid({
       </div>
 
       {/* Selected Perks Summary */}
-      {Object.keys(localSelectedPerks).length > 0 && (
+      {selectedPerks.length > 0 && (
         <div className="mt-6 p-4 bg-gray-700 rounded border border-gray-600">
           <h3 className="text-lg font-semibold text-white mb-3">Your Selected Build:</h3>
           <div className="space-y-2">
-            {Object.entries(localSelectedPerks).map(([slotIndex, perkIndex]) => {
-              const slot = parseInt(slotIndex)
-              const perk = weapon.proficiency_perks_by_slot[slot]?.[perkIndex]
+            {selectedPerks.map((perkId) => {
+              const perk = perks.find(p => p.id === perkId)
               
               if (!perk) return null
               
               return (
-                <div key={slotIndex} className="flex items-center gap-3 text-sm">
+                <div key={perkId} className="flex items-center gap-3 text-sm">
                   <span className="bg-gray-600 px-2 py-1 rounded text-xs font-bold">
-                    Slot {slot + 1}
+                    Slot {perk.tier_level + 1}
                   </span>
-                  <span className="text-yellow-300 font-medium">{perk.perk_name}</span>
-                  <span className="text-gray-400">{perk.perk_description}</span>
+                  <span className="text-yellow-300 font-medium">{perk.name}</span>
+                  <span className="text-gray-400">{perk.description}</span>
                 </div>
               )
             })}

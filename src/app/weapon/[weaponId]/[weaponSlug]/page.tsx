@@ -4,12 +4,11 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useWeaponByName, useWeaponPerks, useSubmitVote, getUserSession } from '@/hooks'
 import { slugToWeaponName } from '@/lib/utils'
-import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
 import { useState } from 'react'
 
 export default function WeaponPage() {
   const params = useParams()
-  const weaponSlug = params.weaponId as string
+  const weaponSlug = params.weaponSlug as string
   const weaponName = slugToWeaponName(weaponSlug)
   
   const { data: weapon, isLoading: weaponLoading, error: weaponError } = useWeaponByName(weaponName)
@@ -49,25 +48,13 @@ export default function WeaponPage() {
   }
 
   const handlePerkSelect = (perkId: string) => {
-    if (!perks) return
-    
-    const selectedPerk = perks.find(p => p.id === perkId)
-    if (!selectedPerk) return
-    
     setSelectedPerks(current => {
       // If perk is already selected, remove it
       if (current.includes(perkId)) {
         return current.filter(id => id !== perkId)
       }
-      
-      // Remove any other perk from the same tier/slot before adding this one
-      const filteredPerks = current.filter(id => {
-        const perk = perks.find(p => p.id === id)
-        return perk && perk.tier_level !== selectedPerk.tier_level
-      })
-      
-      // Add the new perk
-      return [...filteredPerks, perkId]
+      // Otherwise add it
+      return [...current, perkId]
     })
   }
 
@@ -143,19 +130,89 @@ export default function WeaponPage() {
             <ul className="text-sm text-blue-200 space-y-1">
               <li>• Click on perk icons to select your preferred build</li>
               <li>• Hover over perks to see detailed descriptions</li>
-              <li>• <strong>Only one perk per slot</strong> - selecting a new perk will replace the previous one in that slot</li>
+              <li>• Some slots have multiple perk options - choose wisely!</li>
               <li>• Submit your vote to help the community decide the best builds</li>
             </ul>
           </div>
 
-          {/* Weapon Proficiency Grid */}
+          {/* Weapon Info */}
+          <div className="mb-6 bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="flex items-center gap-6">
+              {weapon.image_url ? (
+                <img 
+                  src={weapon.image_url} 
+                  alt={weapon.name}
+                  className="w-20 h-20 object-contain"
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                  }}
+                />
+              ) : (
+                <div className="w-20 h-20 flex items-center justify-center text-4xl">⚔️</div>
+              )}
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">{weapon.name}</h1>
+                <p className="text-gray-400">Type: {weapon.weapon_type}</p>
+                {weapon.vocation && <p className="text-gray-400">Vocation: {weapon.vocation}</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* Perks Selection */}
           {perks && perks.length > 0 ? (
-            <WeaponProficiencyGrid
-              weapon={weapon}
-              perks={perks}
-              onPerkSelect={handlePerkSelect}
-              selectedPerks={selectedPerks}
-            />
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+              <h2 className="text-xl font-bold text-white mb-4">Select your preferred perks:</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {perks.map((perk) => {
+                  const isSelected = selectedPerks.includes(perk.id)
+                  return (
+                    <div
+                      key={perk.id}
+                      onClick={() => handlePerkSelect(perk.id)}
+                      className={`
+                        cursor-pointer p-4 rounded-lg border-2 transition-all duration-200
+                        ${isSelected 
+                          ? 'border-yellow-500 bg-yellow-900/20' 
+                          : 'border-gray-600 bg-gray-700 hover:border-gray-500'
+                        }
+                      `}
+                    >
+                      <div className="flex items-start gap-3">
+                        {perk.main_icon_url ? (
+                          <img 
+                            src={perk.main_icon_url} 
+                            alt={perk.name}
+                            className="w-8 h-8 object-contain flex-shrink-0"
+                            crossOrigin="anonymous"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                            }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 flex items-center justify-center text-sm">⚡</div>
+                        )}
+                        <div>
+                          <h3 className={`font-semibold ${isSelected ? 'text-yellow-300' : 'text-white'}`}>
+                            {perk.name}
+                          </h3>
+                          {perk.description && (
+                            <p className="text-sm text-gray-400 mt-1">{perk.description}</p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            Tier {perk.tier_level} • {perk.vote_count} votes
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           ) : (
             <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6 text-center">
               <p className="text-gray-400">No perks available for this weapon yet.</p>
