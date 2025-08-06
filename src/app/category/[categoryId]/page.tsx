@@ -2,11 +2,11 @@ import { getWeaponsByCategory, getWeaponCategories } from '@/lib/serverQueries'
 import CategoryClient from '@/components/CategoryClient'
 
 interface CategoryPageProps {
-  params: { categoryId: string }
+  params: Promise<{ categoryId: string }>
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const { categoryId } = params
+  const { categoryId } = await params
   
   // Fetch data on the server
   const [initialWeapons, initialCategories] = await Promise.all([

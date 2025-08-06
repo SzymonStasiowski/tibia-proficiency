@@ -4,8 +4,8 @@ import { useMemo, useEffect, useRef, useState } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, TooltipProps } from 'recharts'
 import { TrophyIcon } from 'lucide-react'
 
-// Custom Tooltip Component
-const CustomTooltip = ({ active, payload, label }: TooltipProps<any, any>) => {
+// Custom Tooltip Component  
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[]; label?: string }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     return (
@@ -110,14 +110,15 @@ export default function VotingResults({ perks, votes, isVisible = true, onEditVo
     
     Object.entries(perksByTier).forEach(([tierStr, tierPerks]) => {
       const tier = parseInt(tierStr)
+      const typedTierPerks = tierPerks as any[]
       
       // Calculate total votes for this tier
-      const totalTierVotes = tierPerks.reduce((sum, perk) => {
+      const totalTierVotes = typedTierPerks.reduce((sum, perk) => {
         return sum + (perkVoteCounts[perk.id] || 0)
       }, 0)
       
       // Calculate percentage for each perk in this tier
-      results[tier] = tierPerks.map((perk, index) => {
+      results[tier] = typedTierPerks.map((perk, index) => {
         const voteCount = perkVoteCounts[perk.id] || 0
         const percentage = totalTierVotes > 0 ? (voteCount / totalTierVotes) * 100 : 0
         

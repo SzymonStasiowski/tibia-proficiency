@@ -44,7 +44,11 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
   // Check if user has voted and set initial state
   useEffect(() => {
     if (existingVote && existingVote.selected_perks) {
-      setSelectedPerks(existingVote.selected_perks)
+      // Ensure selected_perks is an array of strings
+      const perks = Array.isArray(existingVote.selected_perks) 
+        ? existingVote.selected_perks.filter((p): p is string => typeof p === 'string')
+        : []
+      setSelectedPerks(perks)
       setShowResults(true)
     }
   }, [existingVote])
@@ -149,15 +153,7 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
       }
     } catch (error: any) {
       console.error('Error submitting vote:', error)
-      
-      // Better error messages based on error type
-      if (error?.message?.includes('network')) {
-        showError('Network error. Please check your connection and try again.')
-      } else if (error?.message?.includes('unauthorized')) {
-        showError('Authentication error. Please refresh the page and try again.')
-      } else {
-        showError(`Failed to submit vote: ${error?.message || 'Unknown error'}. Please try again.`)
-      }
+      showError(`Failed to submit vote: ${error?.message || 'Unknown error'}. Please try again.`)
     }
   }
 

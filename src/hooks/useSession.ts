@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-// Session management hook with SSR safety
+// Simple session management for vote tracking
 export function useUserSession(): string {
   const [sessionId, setSessionId] = useState<string>('')
 
@@ -10,6 +10,7 @@ export function useUserSession(): string {
       let storedSessionId = localStorage.getItem('user_session')
       
       if (!storedSessionId) {
+        // Simple session ID generation
         storedSessionId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now()
         localStorage.setItem('user_session', storedSessionId)
       }
@@ -21,7 +22,7 @@ export function useUserSession(): string {
   return sessionId
 }
 
-// Legacy function for backward compatibility - will be deprecated
+// Legacy function for backward compatibility
 export function getUserSession(): string {
   if (typeof window === 'undefined') return ''
   

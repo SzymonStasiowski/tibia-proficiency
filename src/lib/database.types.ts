@@ -89,6 +89,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          metadata: Json | null
           selected_perks: Json
           updated_at: string
           user_session: string
@@ -97,6 +98,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          metadata?: Json | null
           selected_perks: Json
           updated_at?: string
           user_session: string
@@ -105,6 +107,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          metadata?: Json | null
           selected_perks?: Json
           updated_at?: string
           user_session?: string

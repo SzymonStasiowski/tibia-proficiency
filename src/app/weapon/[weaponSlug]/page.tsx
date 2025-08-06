@@ -4,11 +4,11 @@ import WeaponClient from '@/components/WeaponClient'
 import { notFound } from 'next/navigation'
 
 interface WeaponPageProps {
-  params: { weaponSlug: string }
+  params: Promise<{ weaponSlug: string }>
 }
 
 export default async function WeaponPage({ params }: WeaponPageProps) {
-  const { weaponSlug } = params
+  const { weaponSlug } = await params
   const weaponName = slugToWeaponName(weaponSlug)
   
   try {
