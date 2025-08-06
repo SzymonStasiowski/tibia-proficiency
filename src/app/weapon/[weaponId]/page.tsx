@@ -19,6 +19,14 @@ export default function WeaponPage() {
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
   const [hasVoted, setHasVoted] = useState(false)
   
+  // Calculate if all slots are filled
+  const availableTiers = perks ? [...new Set(perks.map(perk => perk.tier_level))] : []
+  const selectedTiers = perks ? [...new Set(selectedPerks.map(perkId => {
+    const perk = perks.find(p => p.id === perkId)
+    return perk?.tier_level
+  }).filter(tier => tier !== undefined))] : []
+  const allSlotsFilled = availableTiers.length > 0 && selectedTiers.length === availableTiers.length
+  
   if (weaponLoading || perksLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -72,8 +80,21 @@ export default function WeaponPage() {
   }
 
   const handleSubmitVote = async () => {
-    if (selectedPerks.length === 0) {
-      alert('Please select at least one perk before voting!')
+    if (!perks) return
+    
+    // Get unique tier levels from available perks
+    const availableTiers = [...new Set(perks.map(perk => perk.tier_level))].sort()
+    
+    // Check if user has selected a perk for each available tier
+    const selectedTiers = [...new Set(selectedPerks.map(perkId => {
+      const perk = perks.find(p => p.id === perkId)
+      return perk?.tier_level
+    }).filter(tier => tier !== undefined))].sort()
+    
+    if (selectedTiers.length !== availableTiers.length) {
+      const missingSlots = availableTiers.filter(tier => !selectedTiers.includes(tier))
+      const slotNumbers = missingSlots.map(tier => tier + 1).join(', ')
+      alert(`Please select a perk for all slots before voting!\nMissing slots: ${slotNumbers}`)
       return
     }
     
@@ -93,12 +114,6 @@ export default function WeaponPage() {
     }
   }
 
-  const handleViewResults = () => {
-    // TODO: Navigate to results page
-    console.log('View results for:', weapon.name)
-    alert('Results page coming soon!')
-  }
-
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
@@ -106,29 +121,23 @@ export default function WeaponPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link 
-                href="/" 
-                className="text-blue-400 hover:text-blue-300 transition-colors"
+              <button 
+                onClick={() => window.history.back()}
+                className="text-blue-400 hover:text-blue-300 transition-colors p-2 hover:bg-gray-700 rounded"
               >
-                ← Back to Categories
-              </Link>
+                ←
+              </button>
               <div className="w-px h-6 bg-gray-600"></div>
               <h1 className="text-xl font-bold">Weapon Proficiency Builder</h1>
             </div>
             
             <div className="flex items-center gap-3">
               <button
-                onClick={handleViewResults}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors text-sm font-medium"
+                onClick={() => weapon.name && window.open(`https://tibia.fandom.com/wiki/${weapon.name.replace(/ /g, '_')}`, '_blank')}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded transition-colors text-sm"
               >
-                📊 View Community Results
+                🔗 Tibia Wiki
               </button>
-              <button
-                              onClick={() => weapon.name && window.open(`https://tibia.fandom.com/wiki/${weapon.name.replace(/ /g, '_')}`, '_blank')}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded transition-colors text-sm"
-            >
-              🔗 Tibia Wiki
-            </button>
             </div>
           </div>
         </div>
@@ -137,17 +146,6 @@ export default function WeaponPage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Instructions */}
-          <div className="mb-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
-            <h2 className="text-lg font-semibold mb-2 text-blue-300">How to use:</h2>
-            <ul className="text-sm text-blue-200 space-y-1">
-              <li>• Click on perk icons to select your preferred build</li>
-              <li>• Hover over perks to see detailed descriptions</li>
-              <li>• <strong>Only one perk per slot</strong> - selecting a new perk will replace the previous one in that slot</li>
-              <li>• Submit your vote to help the community decide the best builds</li>
-            </ul>
-          </div>
-
           {/* Weapon Proficiency Grid */}
           {perks && perks.length > 0 ? (
             <WeaponProficiencyGrid
@@ -166,12 +164,12 @@ export default function WeaponPage() {
           <div className="mt-8 flex items-center justify-center gap-4">
             <button
               onClick={handleSubmitVote}
-              disabled={hasVoted || selectedPerks.length === 0 || submitVoteMutation.isPending}
+              disabled={hasVoted || !allSlotsFilled || submitVoteMutation.isPending}
               className={`
                 px-8 py-3 rounded-lg font-semibold transition-all duration-200
                 ${hasVoted 
                   ? 'bg-green-600 text-white cursor-not-allowed' 
-                  : selectedPerks.length > 0
+                  : allSlotsFilled
                     ? 'bg-yellow-600 hover:bg-yellow-500 text-black hover:scale-105 shadow-lg disabled:opacity-50'
                     : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                 }
@@ -181,7 +179,9 @@ export default function WeaponPage() {
                 ? '⏳ Submitting...'
                 : hasVoted 
                   ? '✅ Vote Submitted!' 
-                  : '🗳️ Submit Your Vote'
+                  : allSlotsFilled
+                    ? '🗳️ Submit Your Vote'
+                    : `🗳️ Fill All Slots (${selectedTiers.length}/${availableTiers.length})`
               }
             </button>
             
@@ -194,21 +194,7 @@ export default function WeaponPage() {
             </button>
           </div>
 
-          {/* Vote Count Display (Mock) */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 text-center">
-              <div className="text-2xl font-bold text-green-400">347</div>
-              <div className="text-sm text-gray-400">Total Votes</div>
-            </div>
-            <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 text-center">
-              <div className="text-2xl font-bold text-blue-400">89%</div>
-              <div className="text-sm text-gray-400">Consensus on Slot 1</div>
-            </div>
-            <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 text-center">
-              <div className="text-2xl font-bold text-purple-400">23</div>
-              <div className="text-sm text-gray-400">Unique Builds</div>
-            </div>
-          </div>
+
 
           {/* Subtle Donation Note */}
           {hasVoted && (

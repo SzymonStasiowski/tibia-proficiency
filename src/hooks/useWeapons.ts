@@ -40,6 +40,23 @@ export function useWeapons(weaponType?: string) {
   })
 }
 
+// Get all weapons for search functionality
+export function useAllWeapons() {
+  return useQuery({
+    queryKey: weaponKeys.lists(),
+    queryFn: async (): Promise<Weapon[]> => {
+      const { data, error } = await supabase
+        .from('weapons')
+        .select('*')
+        .order('name')
+      
+      if (error) throw error
+      
+      return data || []
+    },
+  })
+}
+
 export function useWeapon(id: string) {
   return useQuery({
     queryKey: weaponKeys.detail(id),

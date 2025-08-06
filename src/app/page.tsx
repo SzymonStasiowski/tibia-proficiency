@@ -5,22 +5,14 @@ import { useWeaponCategories, useCommunityStats } from '@/hooks'
 import WeaponCategoryCard from '@/components/WeaponCategoryCard'
 import CommunityStats from '@/components/CommunityStats'
 import DonationCard from '@/components/DonationCard'
+import WeaponSelect from '@/components/WeaponSelect'
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('')
   const { data: categories, isLoading: categoriesLoading } = useWeaponCategories()
   const { data: stats, isLoading: statsLoading } = useCommunityStats()
 
   const handleCategoryClick = (categoryId: string) => {
     window.location.href = `/category/${categoryId}`
-  }
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      // Simple search - redirect to search results page (we'll create this)
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
-    }
   }
 
   const handleRandomWeapon = () => {
@@ -44,24 +36,10 @@ export default function Home() {
             Vote on your preferred proficiency perks and see what the community thinks!
           </p>
           
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search weapons... (e.g., 'Abyss Hammer', 'Sword', 'Life Leech')"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-6 py-4 text-lg rounded-full border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
-              >
-                🔍 Search
-              </button>
-            </div>
-          </form>
+          {/* Weapon Selector */}
+          <div className="mb-8">
+            <WeaponSelect />
+          </div>
 
           {/* Quick Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
