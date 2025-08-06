@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAllWeapons } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 
@@ -10,6 +11,7 @@ interface SearchAutocompleteProps {
 }
 
 export default function SearchAutocomplete({ onWeaponSelect }: SearchAutocompleteProps) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -77,7 +79,7 @@ export default function SearchAutocomplete({ onWeaponSelect }: SearchAutocomplet
     setSelectedIndex(-1)
     onWeaponSelect?.()
     // Navigate to weapon page
-    window.location.href = `/weapon/${weaponNameToSlug(weapon.name)}`
+    router.push(`/weapon/${weaponNameToSlug(weapon.name)}`)
   }
 
   // Close dropdown when clicking outside

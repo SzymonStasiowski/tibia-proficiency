@@ -4,14 +4,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState } from 'react'
 
-export default function QueryProvider({
-  children,
-}: {
+interface QueryProviderProps {
   children: React.ReactNode
-}) {
+  initialData?: Record<string, any>
+}
+
+export default function QueryProvider({ children, initialData }: QueryProviderProps) {
   const [queryClient] = useState(
-    () =>
-      new QueryClient({
+    () => {
+      const client = new QueryClient({
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000, // 1 minute
@@ -24,6 +25,16 @@ export default function QueryProvider({
           },
         },
       })
+
+      // Hydrate with initial data if provided
+      if (initialData) {
+        Object.entries(initialData).forEach(([key, data]) => {
+          client.setQueryData([key], data)
+        })
+      }
+
+      return client
+    }
   )
 
   return (

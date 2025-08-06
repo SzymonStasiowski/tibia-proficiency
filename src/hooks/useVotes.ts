@@ -193,14 +193,3 @@ export function useCommunityStats() {
   })
 }
 
-// Generate or get user session ID
-export function getUserSession(): string {
-  if (typeof window === 'undefined') return ''
-  
-  let sessionId = localStorage.getItem('user_session')
-  if (!sessionId) {
-    sessionId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now()
-    localStorage.setItem('user_session', sessionId)
-  }
-  return sessionId
-}

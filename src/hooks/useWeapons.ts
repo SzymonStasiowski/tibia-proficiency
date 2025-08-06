@@ -82,7 +82,7 @@ export function useWeapon(id: string) {
   })
 }
 
-export function useWeaponByName(name: string) {
+export function useWeaponByName(name: string, initialData?: WeaponWithPerks | null) {
   return useQuery({
     queryKey: [...weaponKeys.details(), 'by-name', name],
     queryFn: async (): Promise<WeaponWithPerks | null> => {
@@ -93,7 +93,7 @@ export function useWeaponByName(name: string) {
           *,
           perks (*)
         `)
-        .eq('name', name)
+        .ilike('name', name)
         .single()
       
       if (weaponError) {
@@ -104,6 +104,7 @@ export function useWeaponByName(name: string) {
       return weapon as WeaponWithPerks
     },
     enabled: !!name,
+    initialData: initialData,
   })
 }
 

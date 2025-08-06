@@ -12,7 +12,7 @@ export const perkKeys = {
 }
 
 // Get perks for a specific weapon
-export function useWeaponPerks(weaponId: string) {
+export function useWeaponPerks(weaponId: string, initialData?: Perk[]) {
   return useQuery({
     queryKey: perkKeys.byWeapon(weaponId),
     queryFn: async (): Promise<Perk[]> => {
@@ -27,6 +27,7 @@ export function useWeaponPerks(weaponId: string) {
       return data || []
     },
     enabled: !!weaponId,
+    initialData: initialData,
   })
 }
 

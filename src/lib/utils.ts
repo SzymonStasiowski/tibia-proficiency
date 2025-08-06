@@ -17,8 +17,9 @@ export function weaponNameToSlug(name: string): string {
 export function slugToWeaponName(slug: string): string {
   return slug
     .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ')
+    .trim()
 }
 
 // Alternative: if you prefer no formatting to avoid any hydration issues

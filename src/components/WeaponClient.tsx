@@ -1,33 +1,45 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useWeaponByName, useWeaponPerks, useSubmitVote, getUserSession } from '@/hooks'
+import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession } from '@/hooks'
 import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
 import { useState } from 'react'
 
-export default function WeaponPage() {
-  const params = useParams()
-  const weaponSlug = params.weaponId as string
+interface WeaponClientProps {
+  weaponSlug: string
+  initialWeapon?: any
+  initialPerks?: any[]
+}
+
+export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }: WeaponClientProps) {
+  const router = useRouter()
   const weaponName = slugToWeaponName(weaponSlug)
   
-  const { data: weapon, isLoading: weaponLoading, error: weaponError } = useWeaponByName(weaponName)
-  const { data: perks, isLoading: perksLoading } = useWeaponPerks(weapon?.id || '')
+  const { data: weapon, isLoading: weaponLoading, error: weaponError } = useWeaponByName(weaponName, initialWeapon)
+  const { data: perks, isLoading: perksLoading } = useWeaponPerks(weapon?.id || '', initialPerks)
   const submitVoteMutation = useSubmitVote()
+  const userSession = useUserSession()
+  
+  // Use server data as fallback
+  const weaponData = weapon || initialWeapon
+  const perksData = perks || initialPerks || []
+  const isLoadingWeapon = weaponLoading && !initialWeapon
+  const isLoadingPerks = perksLoading && !initialPerks
   
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
   const [hasVoted, setHasVoted] = useState(false)
   
   // Calculate if all slots are filled
-  const availableTiers = perks ? [...new Set(perks.map(perk => perk.tier_level))] : []
-  const selectedTiers = perks ? [...new Set(selectedPerks.map(perkId => {
-    const perk = perks.find(p => p.id === perkId)
+  const availableTiers = perksData ? [...new Set(perksData.map(perk => perk.tier_level))] : []
+  const selectedTiers = perksData ? [...new Set(selectedPerks.map(perkId => {
+    const perk = perksData.find(p => p.id === perkId)
     return perk?.tier_level
   }).filter(tier => tier !== undefined))] : []
   const allSlotsFilled = availableTiers.length > 0 && selectedTiers.length === availableTiers.length
-  
-  if (weaponLoading || perksLoading) {
+
+  if (isLoadingWeapon || isLoadingPerks) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center text-white">
@@ -38,7 +50,7 @@ export default function WeaponPage() {
     )
   }
   
-  if (weaponError || !weapon) {
+  if (weaponError || !weaponData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
@@ -57,9 +69,9 @@ export default function WeaponPage() {
   }
 
   const handlePerkSelect = (perkId: string) => {
-    if (!perks) return
+    if (!perksData) return
     
-    const selectedPerk = perks.find(p => p.id === perkId)
+    const selectedPerk = perksData.find(p => p.id === perkId)
     if (!selectedPerk) return
     
     setSelectedPerks(current => {
@@ -70,7 +82,7 @@ export default function WeaponPage() {
       
       // Remove any other perk from the same tier/slot before adding this one
       const filteredPerks = current.filter(id => {
-        const perk = perks.find(p => p.id === id)
+        const perk = perksData.find(p => p.id === id)
         return perk && perk.tier_level !== selectedPerk.tier_level
       })
       
@@ -80,14 +92,14 @@ export default function WeaponPage() {
   }
 
   const handleSubmitVote = async () => {
-    if (!perks) return
+    if (!perksData) return
     
     // Get unique tier levels from available perks
-    const availableTiers = [...new Set(perks.map(perk => perk.tier_level))].sort()
+    const availableTiers = [...new Set(perksData.map(perk => perk.tier_level))].sort()
     
     // Check if user has selected a perk for each available tier
     const selectedTiers = [...new Set(selectedPerks.map(perkId => {
-      const perk = perks.find(p => p.id === perkId)
+      const perk = perksData.find(p => p.id === perkId)
       return perk?.tier_level
     }).filter(tier => tier !== undefined))].sort()
     
@@ -99,15 +111,14 @@ export default function WeaponPage() {
     }
     
     try {
-      const userSession = getUserSession()
       await submitVoteMutation.mutateAsync({
-        weapon_id: weapon!.id,
+        weapon_id: weaponData!.id,
         selected_perks: selectedPerks,
         userSession
       })
       
       setHasVoted(true)
-      alert(`Thank you for voting! Your build has been submitted for ${weapon.name}.`)
+      alert(`Thank you for voting! Your build has been submitted for ${weaponData.name}.`)
     } catch (error) {
       console.error('Error submitting vote:', error)
       alert('Failed to submit vote. Please try again.')
@@ -122,7 +133,7 @@ export default function WeaponPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => window.history.back()}
+                onClick={() => router.back()}
                 className="text-blue-400 hover:text-blue-300 transition-colors p-2 hover:bg-gray-700 rounded"
               >
                 ←
@@ -133,7 +144,7 @@ export default function WeaponPage() {
             
             <div className="flex items-center gap-3">
               <button
-                onClick={() => weapon.name && window.open(`https://tibia.fandom.com/wiki/${weapon.name.replace(/ /g, '_')}`, '_blank')}
+                onClick={() => weaponData.name && window.open(`https://tibia.fandom.com/wiki/${weaponData.name.replace(/ /g, '_')}`, '_blank')}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded transition-colors text-sm"
               >
                 🔗 Tibia Wiki
@@ -147,10 +158,10 @@ export default function WeaponPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Weapon Proficiency Grid */}
-          {perks && perks.length > 0 ? (
+          {perksData && perksData.length > 0 ? (
             <WeaponProficiencyGrid
-              weapon={weapon}
-              perks={perks}
+              weapon={weaponData}
+              perks={perksData}
               onPerkSelect={handlePerkSelect}
               selectedPerks={selectedPerks}
             />
@@ -194,8 +205,6 @@ export default function WeaponPage() {
             </button>
           </div>
 
-
-
           {/* Subtle Donation Note */}
           {hasVoted && (
             <div className="mt-8 text-center">
@@ -213,4 +222,4 @@ export default function WeaponPage() {
       </div>
     </div>
   )
-} 
+}
