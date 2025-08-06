@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWeaponCategories, useCommunityStats } from '@/hooks'
+import { useWeaponCategories, useCommunityStats, useWeapons } from '@/hooks'
+import { weaponNameToSlug } from '@/lib/utils'
 import WeaponCategoryCard from '@/components/WeaponCategoryCard'
 import CommunityStats from '@/components/CommunityStats'
 import DonationCard from '@/components/DonationCard'
@@ -17,12 +18,14 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
   const router = useRouter()
   
   // Use initial data for React Query hooks
-  const { data: categories, isLoading: categoriesLoading } = useWeaponCategories()
+  const { data: categories, isLoading: categoriesLoading } = useWeaponCategories(initialCategories)
   const { data: stats, isLoading: statsLoading } = useCommunityStats()
+  const { data: weapons, isLoading: weaponsLoading } = useWeapons()
   
   // Use server data as fallback if client data is loading
   const categoriesData = categories || initialCategories || []
   const statsData = stats || initialStats
+  const weaponsData = weapons || []
   const isLoadingCategories = categoriesLoading && !initialCategories
   const isLoadingStats = statsLoading && !initialStats
 
@@ -31,10 +34,16 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
   }
 
   const handleRandomWeapon = () => {
-    // For now, just pick a random category
-    if (categoriesData && categoriesData.length > 0) {
-      const randomCategory = categoriesData[Math.floor(Math.random() * categoriesData.length)]
-      router.push(`/category/${randomCategory.id}`)
+    if (weaponsData && weaponsData.length > 0) {
+      const randomWeapon = weaponsData[Math.floor(Math.random() * weaponsData.length)]
+      const weaponSlug = weaponNameToSlug(randomWeapon.name)
+      router.push(`/weapon/${weaponSlug}`)
+    } else {
+      // Fallback to random category if no weapons loaded yet
+      if (categoriesData && categoriesData.length > 0) {
+        const randomCategory = categoriesData[Math.floor(Math.random() * categoriesData.length)]
+        router.push(`/category/${randomCategory.id}`)
+      }
     }
   }
 
@@ -43,8 +52,8 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
       {/* Hero Section */}
       <div className="container mx-auto px-4 pt-12 pb-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Tibia Proficiency
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">
+            <span className="text-purple-500">tibia</span><span className="text-cyan-500">vote</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
             Help the community choose the best perk combinations for every weapon. 
@@ -112,30 +121,6 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-gray-100 dark:bg-gray-800 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-gray-600 dark:text-gray-400 mb-6">
-            <p className="mb-2">
-              Made with ❤️ for the Tibia community
-            </p>
-            <p className="text-sm mb-4">
-              Currently tracking {categoriesData?.reduce((total, cat) => total + cat.weaponCount, 0) || 0} weapons across {categoriesData?.length || 0} categories
-            </p>
-            
-            {/* Footer Donation Note */}
-            <div className="max-w-md mx-auto bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
-              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
-                <span className="font-semibold">💝 Enjoying this tool?</span>
-              </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Support the project: Send Tibia Coins to <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">Zwykly Parcel</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

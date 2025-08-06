@@ -2,10 +2,13 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession } from '@/hooks'
+import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useUserWeaponVote, useWeaponVotes } from '@/hooks'
 import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
-import { useState } from 'react'
+import VotingResults from '@/components/VotingResults'
+import Toast from '@/components/Toast'
+import { useToast } from '@/hooks/useToast'
+import { useState, useEffect } from 'react'
 
 interface WeaponClientProps {
   weaponSlug: string
@@ -28,8 +31,23 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
   const isLoadingWeapon = weaponLoading && !initialWeapon
   const isLoadingPerks = perksLoading && !initialPerks
   
+  // Check if user has already voted for this weapon
+  const { data: existingVote } = useUserWeaponVote(weaponData?.id || '', userSession)
+  const { data: allVotes } = useWeaponVotes(weaponData?.id || '')
+  
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
-  const [hasVoted, setHasVoted] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  
+  // Toast system
+  const { toasts, removeToast, success, error: showError, info } = useToast()
+  
+  // Check if user has voted and set initial state
+  useEffect(() => {
+    if (existingVote && existingVote.selected_perks) {
+      setSelectedPerks(existingVote.selected_perks)
+      setShowResults(true)
+    }
+  }, [existingVote])
   
   // Calculate if all slots are filled
   const availableTiers = perksData ? [...new Set(perksData.map(perk => perk.tier_level))] : []
@@ -92,7 +110,10 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
   }
 
   const handleSubmitVote = async () => {
-    if (!perksData) return
+    if (!perksData || !userSession) {
+      showError('Unable to submit vote. Please refresh the page and try again.')
+      return
+    }
     
     // Get unique tier levels from available perks
     const availableTiers = [...new Set(perksData.map(perk => perk.tier_level))].sort()
@@ -106,7 +127,7 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
     if (selectedTiers.length !== availableTiers.length) {
       const missingSlots = availableTiers.filter(tier => !selectedTiers.includes(tier))
       const slotNumbers = missingSlots.map(tier => tier + 1).join(', ')
-      alert(`Please select a perk for all slots before voting!\nMissing slots: ${slotNumbers}`)
+      showError(`Please select a perk for all slots before voting! Missing slots: ${slotNumbers}`)
       return
     }
     
@@ -117,11 +138,26 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
         userSession
       })
       
-      setHasVoted(true)
-      alert(`Thank you for voting! Your build has been submitted for ${weaponData.name}.`)
-    } catch (error) {
+      setShowResults(true)
+      
+      if (existingVote) {
+        success(`Your vote has been updated for ${weaponData.name}!`)
+        info('Your previous vote has been replaced with your new selection.')
+      } else {
+        success(`Thank you for voting! Your build has been submitted for ${weaponData.name}.`)
+        info('Your vote helps the community find the best perk combinations!')
+      }
+    } catch (error: any) {
       console.error('Error submitting vote:', error)
-      alert('Failed to submit vote. Please try again.')
+      
+      // Better error messages based on error type
+      if (error?.message?.includes('network')) {
+        showError('Network error. Please check your connection and try again.')
+      } else if (error?.message?.includes('unauthorized')) {
+        showError('Authentication error. Please refresh the page and try again.')
+      } else {
+        showError(`Failed to submit vote: ${error?.message || 'Unknown error'}. Please try again.`)
+      }
     }
   }
 
@@ -139,7 +175,9 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
                 ←
               </button>
               <div className="w-px h-6 bg-gray-600"></div>
-              <h1 className="text-xl font-bold">Weapon Proficiency Builder</h1>
+              <h1 className="text-xl font-bold">
+                <span className="text-purple-400">tibia</span><span className="text-cyan-400">vote</span>
+              </h1>
             </div>
             
             <div className="flex items-center gap-3">
@@ -155,70 +193,90 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="max-w-6xl mx-auto">
-          {/* Weapon Proficiency Grid */}
-          {perksData && perksData.length > 0 ? (
-            <WeaponProficiencyGrid
-              weapon={weaponData}
-              perks={perksData}
-              onPerkSelect={handlePerkSelect}
-              selectedPerks={selectedPerks}
-            />
-          ) : (
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6 text-center">
-              <p className="text-gray-400">No perks available for this weapon yet.</p>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              onClick={handleSubmitVote}
-              disabled={hasVoted || !allSlotsFilled || submitVoteMutation.isPending}
-              className={`
-                px-8 py-3 rounded-lg font-semibold transition-all duration-200
-                ${hasVoted 
-                  ? 'bg-green-600 text-white cursor-not-allowed' 
-                  : allSlotsFilled
-                    ? 'bg-yellow-600 hover:bg-yellow-500 text-black hover:scale-105 shadow-lg disabled:opacity-50'
-                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                }
-              `}
-            >
-              {submitVoteMutation.isPending 
-                ? '⏳ Submitting...'
-                : hasVoted 
-                  ? '✅ Vote Submitted!' 
-                  : allSlotsFilled
-                    ? '🗳️ Submit Your Vote'
-                    : `🗳️ Fill All Slots (${selectedTiers.length}/${availableTiers.length})`
-              }
-            </button>
-            
-            <button
-              onClick={() => setSelectedPerks([])}
-              disabled={selectedPerks.length === 0}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors"
-            >
-              🔄 Clear Selection
-            </button>
-          </div>
-
-          {/* Subtle Donation Note */}
-          {hasVoted && (
-            <div className="mt-8 text-center">
-              <div className="inline-block bg-yellow-900/20 border border-yellow-800 rounded-lg px-6 py-3 max-w-md">
-                <p className="text-sm text-yellow-300 mb-1">
-                  ✨ Thanks for contributing to the community data!
-                </p>
-                <p className="text-xs text-gray-400">
-                  If this tool helped you, consider supporting it: <span className="font-mono text-blue-400">Zwykly Parcel</span>
-                </p>
+          {/* Compact Progress */}
+          {!showResults && (
+            <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Build Your Weapon</h2>
+                <div className="text-sm text-gray-400">
+                  {selectedTiers.length}/{availableTiers.length} slots filled
+                </div>
               </div>
             </div>
           )}
+
+          {/* Weapon Proficiency Grid */}
+          {!showResults && perksData && perksData.length > 0 ? (
+            <div>
+              <WeaponProficiencyGrid
+                weapon={weaponData}
+                perks={perksData}
+                onPerkSelect={handlePerkSelect}
+                selectedPerks={selectedPerks}
+              />
+              
+              {/* Compact Action Buttons */}
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <button
+                  onClick={handleSubmitVote}
+                  disabled={!allSlotsFilled || submitVoteMutation.isPending || !userSession}
+                  className={`
+                    px-6 py-2 rounded-lg font-medium transition-all duration-200 text-sm
+                    ${allSlotsFilled && userSession
+                      ? 'bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white shadow-lg disabled:opacity-50'
+                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {submitVoteMutation.isPending 
+                    ? '⏳ Submitting...'
+                    : !userSession
+                      ? '⏳ Loading...'
+                      : allSlotsFilled
+                        ? existingVote ? '🔄 Update Vote' : '🗳️ Submit Vote'
+                        : `Fill All Slots (${selectedTiers.length}/${availableTiers.length})`
+                  }
+                </button>
+                
+                <button
+                  onClick={() => setSelectedPerks([])}
+                  disabled={selectedPerks.length === 0}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors text-sm"
+                >
+                  🔄 Clear
+                </button>
+              </div>
+            </div>
+          ) : !showResults ? (
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6 text-center">
+              <p className="text-gray-400">No perks available for this weapon yet.</p>
+            </div>
+          ) : null}
+
+          {/* Voting Results */}
+          {showResults && allVotes && perksData && (
+            <VotingResults 
+              perks={perksData} 
+              votes={allVotes} 
+              isVisible={showResults}
+              onEditVote={() => setShowResults(false)}
+            />
+          )}
         </div>
+      </div>
+
+      {/* Toast Notifications */}
+      <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
       </div>
     </div>
   )

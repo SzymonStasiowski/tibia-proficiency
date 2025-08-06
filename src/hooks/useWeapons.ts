@@ -21,7 +21,7 @@ export const weaponKeys = {
 }
 
 // Hooks
-export function useWeapons(weaponType?: string) {
+export function useWeapons(weaponType?: string, initialData?: Weapon[]) {
   return useQuery({
     queryKey: weaponKeys.list(weaponType || 'all'),
     queryFn: async (): Promise<Weapon[]> => {
@@ -37,6 +37,7 @@ export function useWeapons(weaponType?: string) {
       
       return data || []
     },
+    initialData: initialData,
   })
 }
 
@@ -108,7 +109,7 @@ export function useWeaponByName(name: string, initialData?: WeaponWithPerks | nu
   })
 }
 
-export function useWeaponCategories() {
+export function useWeaponCategories(initialData?: any[]) {
   return useQuery({
     queryKey: weaponKeys.categories(),
     queryFn: async () => {
@@ -133,13 +134,14 @@ export function useWeaponCategories() {
         weaponCount: count,
       }))
     },
+    initialData: initialData,
   })
 }
 
-export function useWeaponsByCategory(categoryId: string) {
+export function useWeaponsByCategory(categoryId: string, initialData?: Weapon[]) {
   // Convert category ID back to weapon type
   const weaponType = categoryId === 'all' ? undefined : 
     categoryId.replace(/-/g, ' ')
   
-  return useWeapons(weaponType)
+  return useWeapons(weaponType, initialData)
 }

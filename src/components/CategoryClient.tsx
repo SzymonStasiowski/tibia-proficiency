@@ -2,8 +2,10 @@
 
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useState, useMemo } from 'react'
 import { useWeaponsByCategory, useWeaponCategories } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
+import { useDebounce } from '@/hooks/useDebounce'
 
 interface CategoryClientProps {
   initialWeapons?: any[]
@@ -14,13 +16,45 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
   const params = useParams()
   const categoryId = params.categoryId as string
   
-  const { data: categories } = useWeaponCategories()
-  const { data: weapons, isLoading: weaponsLoading, error: weaponsError } = useWeaponsByCategory(categoryId)
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
   
-  // Use server data as fallback
-  const categoriesData = categories || initialCategories || []
-  const weaponsData = weapons || initialWeapons || []
+  const { data: categories } = useWeaponCategories(initialCategories)
+  const { data: weapons, isLoading: weaponsLoading, error: weaponsError } = useWeaponsByCategory(categoryId, initialWeapons)
+  
+  // Use server data as fallback - prioritize server data since hooks might not be working
+  const categoriesData = initialCategories || categories || []
+  const rawWeaponsData = initialWeapons || weapons || []
   const isLoadingWeapons = weaponsLoading && !initialWeapons
+  
+  // Filter and sort weapons
+  const weaponsData = useMemo(() => {
+    let filtered = rawWeaponsData
+    
+    // Apply search filter
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase().trim()
+      filtered = filtered.filter(weapon => 
+        weapon.name?.toLowerCase().includes(query) ||
+        weapon.vocation?.toLowerCase().includes(query)
+      )
+    }
+    
+    // Sort by total votes (descending), then by name
+    return filtered.sort((a, b) => {
+      const votesA = a.totalVotes || 0
+      const votesB = b.totalVotes || 0
+      
+      if (votesA !== votesB) {
+        return votesB - votesA // Descending by votes
+      }
+      
+      return (a.name || '').localeCompare(b.name || '') // Ascending by name as tiebreaker
+    })
+  }, [rawWeaponsData, debouncedSearchQuery])
+  
+
   
   const category = categoriesData?.find(cat => cat.id === categoryId)
   
@@ -99,6 +133,31 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
           </Link>
         </div>
 
+        {/* Search Filter */}
+        <div className="mb-8 max-w-md mx-auto">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search weapons..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          {debouncedSearchQuery.trim() && (
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
+              Showing {weaponsData.length} weapons matching "{debouncedSearchQuery}"
+            </p>
+          )}
+        </div>
+
+
+
         {/* Weapons Grid */}
         {isLoadingWeapons ? (
           <div className="text-center py-12">
@@ -114,7 +173,7 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
               </p>
             </div>
           </div>
-        ) : weaponsData && weaponsData.length > 0 ? (
+        ) : (weaponsData && weaponsData.length > 0) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {weaponsData.map((weapon) => (
               <Link 
@@ -149,11 +208,19 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                     <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">
                       {weapon.name}
                     </h3>
-                    {weapon.vocation && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {weapon.vocation}
-                      </p>
-                    )}
+                    <div className="space-y-1">
+                      {weapon.vocation && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {weapon.vocation}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span>{weapon.totalVotes || 0} votes</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Link>

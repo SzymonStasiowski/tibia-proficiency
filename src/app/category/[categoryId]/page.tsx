@@ -14,6 +14,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getWeaponCategories()
   ])
 
+
+
   return (
     <CategoryClient 
       initialWeapons={initialWeapons}

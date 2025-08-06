@@ -24,11 +24,14 @@ export async function getWeaponCategories() {
     }, {} as Record<string, number>)
     
     // Return actual weapon types from database
-    return Object.entries(categoryCounts).map(([type, count]) => ({
+    const categories = Object.entries(categoryCounts).map(([type, count]) => ({
       id: type.toLowerCase().replace(/ /g, '-'),
       name: type,
       weaponCount: count,
     }))
+    
+
+    return categories
   } catch (error) {
     console.error('Error fetching weapon categories:', error)
     return []
@@ -96,17 +99,33 @@ export async function getWeaponsByCategory(categoryId: string) {
     const weaponType = categoryId === 'all' ? undefined : 
       categoryId.replace(/-/g, ' ')
     
-    let query = supabaseServer.from('weapons').select('*')
+
+    
+    // Get weapons with their perks to calculate vote counts
+    let query = supabaseServer.from('weapons').select(`
+      *,
+      perks (vote_count)
+    `)
     
     if (weaponType && weaponType !== 'all') {
-      query = query.eq('weapon_type', weaponType)
+      query = query.ilike('weapon_type', weaponType)
     }
     
     const { data, error } = await query.order('name')
     
     if (error) throw error
     
-    return data || []
+    // Calculate total votes for each weapon and add it to the weapon object
+    const weaponsWithVotes = (data || []).map(weapon => {
+      const totalVotes = (weapon.perks as any[])?.reduce((sum, perk) => sum + (perk.vote_count || 0), 0) || 0
+      return {
+        ...weapon,
+        totalVotes
+      }
+    })
+    
+
+    return weaponsWithVotes
   } catch (error) {
     console.error('Error fetching weapons by category:', error)
     return []

@@ -85,6 +85,41 @@ export type Database = {
         }
         Relationships: []
       }
+      votes: {
+        Row: {
+          created_at: string
+          id: string
+          selected_perks: Json
+          updated_at: string
+          user_session: string
+          weapon_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          selected_perks: Json
+          updated_at?: string
+          user_session: string
+          weapon_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          selected_perks?: Json
+          updated_at?: string
+          user_session?: string
+          weapon_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_weapon_id_fkey"
+            columns: ["weapon_id"]
+            isOneToOne: false
+            referencedRelation: "weapons"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
