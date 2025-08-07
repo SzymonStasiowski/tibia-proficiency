@@ -140,11 +140,12 @@ export_production_schema() {
     log_info "Exporting production database schema..."
     
     # Extract connection details from URL
-    PROD_HOST=$(echo $PROD_URL | sed 's|https://||' | sed 's|\.supabase\.co||').supabase.co
+    PROD_PROJECT_REF=$(echo $PROD_URL | sed 's|https://||' | sed 's|\.supabase\.co||')
+    PROD_HOST="db.${PROD_PROJECT_REF}.supabase.co"
     
     # Export schema (structure only, no data)
     PGPASSWORD="$PROD_SERVICE_KEY" pg_dump \
-        -h db.$PROD_HOST \
+        -h $PROD_HOST \
         -U postgres \
         -d postgres \
         --schema-only \
@@ -164,11 +165,12 @@ export_production_schema() {
 export_production_data() {
     log_info "Exporting production database data..."
     
-    PROD_HOST=$(echo $PROD_URL | sed 's|https://||' | sed 's|\.supabase\.co||').supabase.co
+    PROD_PROJECT_REF=$(echo $PROD_URL | sed 's|https://||' | sed 's|\.supabase\.co||')
+    PROD_HOST="db.${PROD_PROJECT_REF}.supabase.co"
     
     # Export data only (no schema)
     PGPASSWORD="$PROD_SERVICE_KEY" pg_dump \
-        -h db.$PROD_HOST \
+        -h $PROD_HOST \
         -U postgres \
         -d postgres \
         --data-only \
@@ -205,12 +207,13 @@ anonymize_data() {
 import_to_qa() {
     log_info "Importing schema and data to QA database..."
     
-    QA_HOST=$(echo $QA_URL | sed 's|https://||' | sed 's|\.supabase\.co||').supabase.co
+    QA_PROJECT_REF=$(echo $QA_URL | sed 's|https://||' | sed 's|\.supabase\.co||')
+    QA_HOST="db.${QA_PROJECT_REF}.supabase.co"
     
     # Import schema first
     log_info "Importing schema..."
     PGPASSWORD="$QA_SERVICE_KEY" psql \
-        -h db.$QA_HOST \
+        -h $QA_HOST \
         -U postgres \
         -d postgres \
         -f "$BACKUP_DIR/schema.sql" \
@@ -219,7 +222,7 @@ import_to_qa() {
     # Import anonymized data
     log_info "Importing anonymized data..."
     PGPASSWORD="$QA_SERVICE_KEY" psql \
-        -h db.$QA_HOST \
+        -h $QA_HOST \
         -U postgres \
         -d postgres \
         -f "$BACKUP_DIR/data_anonymized.sql" \
@@ -232,11 +235,12 @@ import_to_qa() {
 apply_builds_schema() {
     log_info "Applying builds system schema to QA database..."
     
-    QA_HOST=$(echo $QA_URL | sed 's|https://||' | sed 's|\.supabase\.co||').supabase.co
+    QA_PROJECT_REF=$(echo $QA_URL | sed 's|https://||' | sed 's|\.supabase\.co||')
+    QA_HOST="db.${QA_PROJECT_REF}.supabase.co"
     
     # Apply the builds schema
     PGPASSWORD="$QA_SERVICE_KEY" psql \
-        -h db.$QA_HOST \
+        -h $QA_HOST \
         -U postgres \
         -d postgres \
         -f "./database/builds_schema.sql" \
@@ -249,7 +253,8 @@ apply_builds_schema() {
 create_sample_builds() {
     log_info "Creating sample builds data for testing..."
     
-    QA_HOST=$(echo $QA_URL | sed 's|https://||' | sed 's|\.supabase\.co||').supabase.co
+    QA_PROJECT_REF=$(echo $QA_URL | sed 's|https://||' | sed 's|\.supabase\.co||')
+    QA_HOST="db.${QA_PROJECT_REF}.supabase.co"
     
     # Create sample builds SQL
     cat > "$BACKUP_DIR/sample_builds.sql" << 'EOF'
@@ -338,7 +343,7 @@ EOF
     
     # Apply sample data
     PGPASSWORD="$QA_SERVICE_KEY" psql \
-        -h db.$QA_HOST \
+        -h $QA_HOST \
         -U postgres \
         -d postgres \
         -f "$BACKUP_DIR/sample_builds.sql" \
