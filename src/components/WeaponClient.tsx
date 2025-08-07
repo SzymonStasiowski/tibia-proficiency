@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser } from '@/hooks'
+import { useSubmitCreatorVote } from '@/hooks/useCreators'
 import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
 import VotingResults from '@/components/VotingResults'
@@ -14,15 +15,24 @@ interface WeaponClientProps {
   weaponSlug: string
   initialWeapon?: any
   initialPerks?: any[]
+  isCreatorMode?: boolean
+  creatorToken?: string
 }
 
-export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }: WeaponClientProps) {
+export default function WeaponClient({ 
+  weaponSlug, 
+  initialWeapon, 
+  initialPerks,
+  isCreatorMode = false,
+  creatorToken 
+}: WeaponClientProps) {
   const router = useRouter()
   const weaponName = slugToWeaponName(weaponSlug)
   
   const { data: weapon, isLoading: weaponLoading, error: weaponError } = useWeaponByName(weaponName, initialWeapon)
   const { data: perks, isLoading: perksLoading } = useWeaponPerks(weapon?.id || '', initialPerks)
   const submitVoteMutation = useSubmitVote()
+  const submitCreatorVoteMutation = useSubmitCreatorVote()
   const userSession = useUserSession()
   
   // Use server data as fallback
@@ -113,7 +123,16 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
   }
 
   const handleSubmitVote = async () => {
-    if (!perksData || !userSession) {
+    if (!perksData) {
+      showError('Unable to submit vote. Please refresh the page and try again.')
+      return
+    }
+
+    // For creator mode, check creator token; for regular mode, check user session
+    if (isCreatorMode && !creatorToken) {
+      showError('Invalid creator session. Please refresh the page and try again.')
+      return
+    } else if (!isCreatorMode && !userSession) {
       showError('Unable to submit vote. Please refresh the page and try again.')
       return
     }
@@ -135,20 +154,34 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
     }
     
     try {
-      await submitVoteMutation.mutateAsync({
-        weapon_id: weaponData!.id,
-        selected_perks: selectedPerks,
-        userSession
-      })
-      
-      setShowResults(true)
-      
-      if (existingVote) {
-        success(`Your vote has been updated for ${weaponData.name}!`)
-        info('Your previous vote has been replaced with your new selection.')
+      if (isCreatorMode && creatorToken) {
+        // Creator voting
+        await submitCreatorVoteMutation.mutateAsync({
+          weapon_id: weaponData!.id,
+          selected_perks: selectedPerks,
+          creator_token: creatorToken
+        })
+        
+        setShowResults(true)
+        success(`🌟 Creator recommendation updated for ${weaponData.name}!`)
+        info('Your build is now featured as the "Creator\'s Choice" for this weapon!')
       } else {
-        success(`Thank you for voting! Your build has been submitted for ${weaponData.name}.`)
-        info('Your vote helps the community find the best perk combinations!')
+        // Regular voting
+        await submitVoteMutation.mutateAsync({
+          weapon_id: weaponData!.id,
+          selected_perks: selectedPerks,
+          userSession: userSession!
+        })
+        
+        setShowResults(true)
+        
+        if (existingVote) {
+          success(`Your vote has been updated for ${weaponData.name}!`)
+          info('Your previous vote has been replaced with your new selection.')
+        } else {
+          success(`Thank you for voting! Your build has been submitted for ${weaponData.name}.`)
+          info('Your vote helps the community find the best perk combinations!')
+        }
       }
     } catch (error: any) {
       console.error('Error submitting vote:', error)
@@ -158,6 +191,13 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      {/* Special creator mode header */}
+      {isCreatorMode && (
+        <div className="bg-yellow-600 text-yellow-900 py-2 px-4 text-center font-semibold">
+          🎯 Creator Mode: Your vote will be featured as "Creator's Choice"
+        </div>
+      )}
+      
       {/* Header */}
       <div className="bg-gray-800 border-b border-gray-700">
         <div className="container mx-auto px-4 py-4">

@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      creators: {
+        Row: {
+          id: string
+          creator_token: string
+          creator_slug: string
+          channel_name: string
+          avatar_url: string | null
+          channel_url: string | null
+          platform: 'twitch' | 'youtube' | 'kick' | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          creator_token: string
+          creator_slug: string
+          channel_name: string
+          avatar_url?: string | null
+          channel_url?: string | null
+          platform?: 'twitch' | 'youtube' | 'kick' | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          creator_token?: string
+          creator_slug?: string
+          channel_name?: string
+          avatar_url?: string | null
+          channel_url?: string | null
+          platform?: 'twitch' | 'youtube' | 'kick' | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       perks: {
         Row: {
           created_at: string
@@ -94,6 +133,7 @@ export type Database = {
           updated_at: string
           user_session: string
           weapon_id: string
+          creator_id: string | null
         }
         Insert: {
           created_at?: string
@@ -103,6 +143,7 @@ export type Database = {
           updated_at?: string
           user_session: string
           weapon_id: string
+          creator_id?: string | null
         }
         Update: {
           created_at?: string
@@ -112,6 +153,7 @@ export type Database = {
           updated_at?: string
           user_session?: string
           weapon_id?: string
+          creator_id?: string | null
         }
         Relationships: [
           {
@@ -120,12 +162,32 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "weapons"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
           }
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      creator_stats: {
+        Row: {
+          id: string
+          creator_slug: string
+          channel_name: string
+          avatar_url: string | null
+          channel_url: string | null
+          platform: 'twitch' | 'youtube' | 'kick' | null
+          weapons_voted: number
+          total_votes: number
+          last_vote_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

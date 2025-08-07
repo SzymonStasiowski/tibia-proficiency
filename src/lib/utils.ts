@@ -22,6 +22,33 @@ export function slugToWeaponName(slug: string): string {
     .trim()
 }
 
+// Convert channel name to URL-friendly slug for creators
+export function channelNameToSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim()
+}
+
+// Generate secure creator token
+export function generateCreatorToken(): string {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const randomBytes = crypto.getRandomValues(new Uint8Array(16))
+    const hex = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('')
+    return `creator_${hex}`
+  } else {
+    // Fallback for environments without crypto.getRandomValues
+    return `creator_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+  }
+}
+
+// Validate creator token format
+export function isValidCreatorToken(token: string): boolean {
+  return /^creator_[a-f0-9]{32}$/.test(token) || /^creator_[a-z0-9]{26}$/.test(token)
+}
+
 // Alternative: if you prefer no formatting to avoid any hydration issues
 export function formatNumberSimple(num: number): string {
   return num.toString()
