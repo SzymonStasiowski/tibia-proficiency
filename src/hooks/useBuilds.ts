@@ -8,26 +8,11 @@ export type BuildInsert = InsertTables<'builds'>
 export type BuildVote = Tables<'build_votes'>
 export type PopularBuild = Tables<'popular_builds'>
 
-// Common situation tags for builds
+// Common situation tags for builds (simplified to 3 core tags)
 export const SITUATION_TAGS = {
-  // Damage types
-  ICE_DAMAGE: 'ice_damage',
-  EARTH_DAMAGE: 'earth_damage', 
-  FIRE_DAMAGE: 'fire_damage',
-  PHYSICAL_DAMAGE: 'physical_damage',
-  
-  // Play styles
   SOLO: 'solo',
-  TEAM: 'team',
-  HUNTING: 'hunting',
-  BOSSES: 'bosses',
-  PVP: 'pvp',
-  
-  // Situations
-  LOW_LEVEL: 'low_level',
-  HIGH_LEVEL: 'high_level',
-  PROFIT: 'profit',
-  EXPERIENCE: 'experience'
+  TEAM: 'team', 
+  BOSSES: 'bosses'
 } as const
 
 export type SituationTag = typeof SITUATION_TAGS[keyof typeof SITUATION_TAGS]
@@ -133,6 +118,62 @@ export function useBuildsBySituation(tags: string[], weaponId?: string) {
       return data || []
     },
     enabled: tags.length > 0,
+  })
+}
+
+/**
+ * Get perks for specific builds
+ */
+export function useBuildPerks(buildIds: string[]) {
+  return useQuery({
+    queryKey: [...buildKeys.all, 'perks', buildIds.sort()],
+    queryFn: async () => {
+      if (buildIds.length === 0) return {}
+      
+      // Get all unique perk IDs from all builds
+      const { data: builds, error: buildsError } = await supabase
+        .from('builds')
+        .select('id, selected_perks')
+        .in('id', buildIds)
+      
+      if (buildsError) throw buildsError
+      
+      // Extract all unique perk IDs
+      const allPerkIds = new Set<string>()
+      const buildPerkMap: Record<string, string[]> = {}
+      
+      builds?.forEach(build => {
+        const perkIds = Array.isArray(build.selected_perks) 
+          ? build.selected_perks.filter((id): id is string => typeof id === 'string')
+          : []
+        
+        buildPerkMap[build.id] = perkIds
+        perkIds.forEach(id => allPerkIds.add(id))
+      })
+      
+      // Fetch all unique perks
+      const { data: perks, error: perksError } = await supabase
+        .from('perks')
+        .select('*')
+        .in('id', Array.from(allPerkIds))
+      
+      if (perksError) throw perksError
+      
+      // Create lookup map for perks
+      const perkLookup = (perks || []).reduce((acc, perk) => {
+        acc[perk.id] = perk
+        return acc
+      }, {} as Record<string, any>)
+      
+      // Return perks organized by build ID
+      const result: Record<string, any[]> = {}
+      Object.entries(buildPerkMap).forEach(([buildId, perkIds]) => {
+        result[buildId] = perkIds.map(id => perkLookup[id]).filter(Boolean)
+      })
+      
+      return result
+    },
+    enabled: buildIds.length > 0,
   })
 }
 
@@ -269,10 +310,20 @@ export function useVoteForBuild() {
       if (error) throw error
       return data
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
+      // Get the build to know which weapon to invalidate
+      const { data: build } = await supabase
+        .from('builds')
+        .select('weapon_id')
+        .eq('id', variables.build_id)
+        .single()
+      
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: buildKeys.votes(variables.build_id) })
       queryClient.invalidateQueries({ queryKey: buildKeys.popular() })
+      if (build) {
+        queryClient.invalidateQueries({ queryKey: buildKeys.byWeapon(build.weapon_id) })
+      }
       if (variables.user_session) {
         queryClient.invalidateQueries({ queryKey: buildKeys.userVotes(variables.user_session) })
       }
@@ -310,10 +361,20 @@ export function useRemoveVoteFromBuild() {
       if (error) throw error
       return { success: true }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
+      // Get the build to know which weapon to invalidate
+      const { data: build } = await supabase
+        .from('builds')
+        .select('weapon_id')
+        .eq('id', variables.build_id)
+        .single()
+      
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: buildKeys.votes(variables.build_id) })
       queryClient.invalidateQueries({ queryKey: buildKeys.popular() })
+      if (build) {
+        queryClient.invalidateQueries({ queryKey: buildKeys.byWeapon(build.weapon_id) })
+      }
       if (variables.user_session) {
         queryClient.invalidateQueries({ queryKey: buildKeys.userVotes(variables.user_session) })
       }

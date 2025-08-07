@@ -3,7 +3,7 @@ import { useState } from 'react'
 interface PerkIconProps {
   iconUrl: string
   altText: string
-  size?: 'small' | 'large'
+  size?: 'small' | 'medium' | 'large'
   overlayIcon?: string | null
   className?: string
 }
@@ -43,8 +43,8 @@ export default function PerkIcon({
     }
   }
 
-  const sizeClasses = size === 'small' ? 'w-4 h-4' : 'w-16 h-16'
-  const iconSize = size === 'small' ? 'text-xs' : 'text-2xl'
+  const sizeClasses = size === 'small' ? 'w-4 h-4' : size === 'medium' ? 'w-8 h-8' : 'w-16 h-16'
+  const iconSize = size === 'small' ? 'text-xs' : size === 'medium' ? 'text-sm' : 'text-2xl'
 
   return (
     <div className={`relative ${sizeClasses} ${className}`}>
