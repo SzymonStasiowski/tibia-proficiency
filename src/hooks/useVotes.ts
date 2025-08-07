@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
+import { weaponKeys } from './useWeapons'
 
 // Types for votes
 export interface Vote {
@@ -157,6 +158,8 @@ export function useSubmitVote() {
       queryClient.invalidateQueries({ queryKey: voteKeys.byWeapon(variables.weapon_id) })
       queryClient.invalidateQueries({ queryKey: voteKeys.userVotes(variables.userSession) })
       queryClient.invalidateQueries({ queryKey: voteKeys.stats() })
+      // Invalidate hot weapons cache since vote counts changed
+      queryClient.invalidateQueries({ queryKey: [...weaponKeys.all, 'hot'] })
     },
   })
 }
