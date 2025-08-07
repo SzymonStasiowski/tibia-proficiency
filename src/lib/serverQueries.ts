@@ -227,7 +227,7 @@ export async function getPopularBuilds(limit: number = 10) {
     const { data, error } = await supabaseServer
       .from('popular_builds')
       .select('*')
-      .order('vote_count', { ascending: false })
+      .order('total_votes', { ascending: false })
       .limit(limit)
     
     if (error) throw error

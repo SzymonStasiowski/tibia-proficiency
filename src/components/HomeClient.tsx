@@ -138,16 +138,16 @@ export default function HomeClient({ initialCategories, initialHotWeapons, initi
         {/* Most Voted Builds */}
         <div className="mb-12">
           {isLoadingPopularBuilds ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-8 shadow-lg text-center max-w-4xl mx-auto">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-gray-600 mt-4">Loading most voted builds...</p>
             </div>
           ) : popularBuildsData && popularBuildsData.length > 0 ? (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto px-4">
               <MostVotedBuilds builds={popularBuildsData} />
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-8 shadow-lg text-center max-w-4xl mx-auto">
               <p className="text-gray-600">No builds available yet. Be the first to create a build!</p>
             </div>
           )}
