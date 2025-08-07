@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+
 import BuildPerkDisplay from './BuildPerkDisplay'
 import type { PopularBuild, Build } from '@/hooks/useBuilds'
 
@@ -98,21 +98,32 @@ export default function BuildCard({
 
           {/* Vote Section */}
           <div className="flex-shrink-0 text-center">
-            {!hideVoting && (
-              <button
-                onClick={handleVote}
-                disabled={votingBuildId === build.id}
-                className={`w-10 h-10 rounded-lg font-bold text-sm transition-all duration-200 flex items-center justify-center mb-1 ${
-                  userBuildVotes.includes(build.id)
-                    ? 'bg-transparent border-2 border-green-500 text-green-400'
-                    : 'bg-green-600 text-white disabled:bg-gray-600'
-                }`}
-              >
-                {votingBuildId === build.id ? '⏳' : userBuildVotes.includes(build.id) ? '✓' : '+1'}
-              </button>
-            )}
-            <div className="text-lg font-bold text-white">{build.vote_count}</div>
-            <div className="text-xs text-gray-400">votes</div>
+            <div className="relative inline-block">
+              <div className="text-2xl font-bold text-white">{build.vote_count}</div>
+              <div className="text-xs text-gray-400">votes</div>
+              {!hideVoting && (
+                <button
+                  onClick={handleVote}
+                  disabled={votingBuildId === build.id}
+                  className={`absolute -top-0.5 -right-2 w-4 h-4 rounded-full text-lg font-bold transition-all duration-200 flex items-center justify-center origin-top-right ${
+                    userBuildVotes.includes(build.id)
+                      ? 'bg-transparent border border-green-500 text-green-400'
+                      : 'bg-green-600 text-white disabled:bg-gray-600'
+                  }`}
+                  title={
+                    votingBuildId === build.id
+                      ? 'Processing...' 
+                      : userBuildVotes.includes(build.id)
+                      ? 'Click to remove vote' 
+                      : 'Vote for this build'
+                  }
+                >
+                  <span className="inline-block leading-none">
+                    {votingBuildId === build.id ? '⏳' : userBuildVotes.includes(build.id) ? '✓' : '+'}
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -197,14 +208,16 @@ export default function BuildCard({
           {/* Third Child: Vote Section and Created At */}
           <div className="text-right w-fit flex flex-col items-end gap-3">
             {/* Vote Section */}
-            {!hideVoting && (
-              <div className="flex items-center gap-3">
+            <div className="relative inline-block text-center">
+              <div className="text-4xl font-bold text-white">{build.vote_count}</div>
+              <div className="text-sm text-gray-400">votes</div>
+              {!hideVoting && (
                 <button
                   onClick={handleVote}
                   disabled={votingBuildId === build.id}
-                  className={`px-4 py-2 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center min-w-[60px] ${
+                  className={`absolute -top-1 -right-4 w-4 h-4 rounded-full text-lg font-bold transition-all duration-200 flex items-center justify-center origin-top-right ${
                     userBuildVotes.includes(build.id)
-                      ? 'bg-transparent border-2 border-green-500 text-green-400 hover:bg-green-500/10'
+                      ? 'bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10'
                       : 'bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed'
                   }`}
                   title={
@@ -215,27 +228,17 @@ export default function BuildCard({
                       : 'Vote for this build'
                   }
                 >
-                  {votingBuildId === build.id
-                    ? '⏳' 
-                    : userBuildVotes.includes(build.id)
-                    ? '✓' 
-                    : '+1'
-                  }
+                  <span className="inline-block leading-none">
+                    {votingBuildId === build.id
+                      ? '⏳' 
+                      : userBuildVotes.includes(build.id)
+                      ? '✓' 
+                      : '+'
+                    }
+                  </span>
                 </button>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">{build.vote_count}</div>
-                  <div className="text-sm text-gray-400">votes</div>
-                </div>
-              </div>
-            )}
-            
-            {/* Show just vote count if voting is hidden */}
-            {hideVoting && (
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">{build.vote_count}</div>
-                <div className="text-sm text-gray-400">votes</div>
-              </div>
-            )}
+              )}
+            </div>
             
             {/* Created At */}
             <div className="text-sm text-gray-400">

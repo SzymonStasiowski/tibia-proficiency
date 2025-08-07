@@ -26,7 +26,7 @@ export default function MostVotedBuilds({ builds }: MostVotedBuildsProps) {
             Top community builds across all weapons
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-8 shadow-lg text-center max-w-4xl mx-auto">
           <p className="text-gray-600 dark:text-gray-400">No builds available yet. Be the first to create a build!</p>
         </div>
       </div>
@@ -36,10 +36,10 @@ export default function MostVotedBuilds({ builds }: MostVotedBuildsProps) {
   return (
     <div>
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-2">
+        <h2 className="text-2xl md:text-3xl font-bold mb-2">
           🏆 <span className="text-yellow-500">Most Voted Builds</span>
         </h2>
-        <p className="text-lg text-gray-600 dark:text-gray-300">
+        <p className="text-base md:text-lg text-gray-600 dark:text-gray-300">
           Top community builds across all weapons
         </p>
       </div>
