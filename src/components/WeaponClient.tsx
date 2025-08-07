@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser } from '@/hooks'
+import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser, useWeaponBuilds, useUserBuildVotes } from '@/hooks'
 import { useSubmitCreatorVote } from '@/hooks/useCreators'
 import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
@@ -46,6 +46,11 @@ export default function WeaponClient({
   
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
   const [showResults, setShowResults] = useState(false)
+  const [mode, setMode] = useState<'perks' | 'builds'>('perks') // Toggle between perk voting and builds
+  
+  // Builds-related hooks
+  const { data: builds, isLoading: buildsLoading } = useWeaponBuilds(weaponData?.id || '')
+  const { data: userBuildVotes, isLoading: userBuildVotesLoading } = useUserBuildVotes(userSession)
   
   // Toast system
   const { toasts, removeToast, success, error: showError, info } = useToast()
@@ -230,8 +235,49 @@ export default function WeaponClient({
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-6xl mx-auto">
-          {/* Compact Progress */}
-          {!showResults && (
+          
+          {/* Mode Switcher */}
+          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white mb-1">Choose Your Approach</h2>
+                <p className="text-gray-400 text-sm">
+                  {mode === 'perks' 
+                    ? 'Vote on individual perks for this weapon' 
+                    : 'Browse and vote on community builds for different situations'
+                  }
+                </p>
+              </div>
+              
+              <div className="flex bg-gray-700 rounded-lg p-1">
+                <button
+                  onClick={() => setMode('perks')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    mode === 'perks'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                  }`}
+                >
+                  🎲 Individual Perks
+                </button>
+                <button
+                  onClick={() => setMode('builds')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    mode === 'builds'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                  }`}
+                >
+                  🏗️ Community Builds
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Individual Perks Mode */}
+          {mode === 'perks' && (
+            <>
+              {/* Compact Progress */}
+              {!showResults && (
             <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <h2 className="text-lg font-semibold text-white">Build Your Weapon</h2>
@@ -297,15 +343,95 @@ export default function WeaponClient({
             </div>
           ) : null}
 
-          {/* Voting Results */}
-          {showResults && allVotes && perksData && (
-            <VotingResults 
-              perks={perksData} 
-              votes={allVotes} 
-              isVisible={showResults}
-              onEditVote={() => setShowResults(false)}
-              hasUserVoted={!!existingVote}
-            />
+              {/* Voting Results */}
+              {showResults && allVotes && perksData && (
+                <VotingResults 
+                  perks={perksData} 
+                  votes={allVotes} 
+                  isVisible={showResults}
+                  onEditVote={() => setShowResults(false)}
+                  hasUserVoted={!!existingVote}
+                />
+              )}
+            </>
+          )}
+
+          {/* Community Builds Mode */}
+          {mode === 'builds' && (
+            <div className="space-y-6">
+              {/* Builds List */}
+              {buildsLoading ? (
+                <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading community builds...</p>
+                </div>
+              ) : builds && builds.length > 0 ? (
+                <div className="grid gap-4">
+                  {builds.map((build) => (
+                    <div key={build.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-semibold text-white mb-2">{build.name}</h3>
+                          {build.description && (
+                            <p className="text-gray-400 mb-3">{build.description}</p>
+                          )}
+                          
+                          {/* Situation Tags */}
+                          {build.situation_tags && build.situation_tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {build.situation_tags.map((tag) => (
+                                <span 
+                                  key={tag}
+                                  className="px-2 py-1 bg-blue-600 text-blue-100 rounded text-xs font-medium"
+                                >
+                                  {tag.replace('_', ' ')}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-white">{build.vote_count}</div>
+                          <div className="text-sm text-gray-400">votes</div>
+                        </div>
+                      </div>
+                      
+                      {/* Vote Button */}
+                      <div className="flex justify-between items-center">
+                        <button
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                          disabled={userBuildVotes?.includes(build.id)}
+                        >
+                          {userBuildVotes?.includes(build.id) ? '✓ Voted' : '👍 Vote for this build'}
+                        </button>
+                        
+                        <div className="text-sm text-gray-400">
+                          Created {new Date(build.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
+                  <p className="text-gray-400 mb-4">No community builds yet for this weapon.</p>
+                  <p className="text-sm text-gray-500">Be the first to create a build!</p>
+                </div>
+              )}
+              
+              {/* Create Build Button */}
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 text-center">
+                <h3 className="text-lg font-semibold text-white mb-2">Create Your Own Build</h3>
+                <p className="text-gray-400 mb-4">Share your optimal perk combination with the community</p>
+                <button
+                  onClick={() => setMode('perks')}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  🎯 Create New Build
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>
