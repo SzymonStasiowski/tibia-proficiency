@@ -548,12 +548,26 @@ export default function WeaponClient({
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 text-center">
                 <h3 className="text-lg font-semibold text-white mb-2">Create Your Own Build</h3>
                 <p className="text-gray-400 mb-4">Share your optimal perk combination with the community</p>
-                <button
-                  onClick={() => setMode('perks')}
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  🎯 Create New Build
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={() => setMode('perks')}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    🎲 Select Perks First
+                  </button>
+                  <button
+                    onClick={() => setShowCreateBuild(true)}
+                    disabled={selectedPerks.length === 0}
+                    className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                  >
+                    {selectedPerks.length > 0 ? `💾 Create Build (${selectedPerks.length} perks)` : '💾 Create Build'}
+                  </button>
+                </div>
+                {selectedPerks.length === 0 && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Select perks in Individual Perks mode first, or switch to select perks now
+                  </p>
+                )}
               </div>
             </div>
           )}
