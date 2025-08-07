@@ -17,7 +17,7 @@ interface CreatorFormData {
 
 export default function AdminClient() {
   const router = useRouter()
-  const { showError, success } = useToast()
+  const { toasts, removeToast, error: showError, success } = useToast()
   const queryClient = useQueryClient()
   
   const [formData, setFormData] = useState<CreatorFormData>({
@@ -359,7 +359,17 @@ export default function AdminClient() {
         </div>
       </div>
       
-      <Toast />
+      {/* Toast Notifications */}
+      <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

@@ -35,7 +35,7 @@ export default function CreatorProfileClient({
   creatorStats 
 }: CreatorProfileClientProps) {
   const router = useRouter()
-  const { success } = useToast()
+  const { toasts, removeToast, success } = useToast()
   const [filter, setFilter] = useState<'all' | 'recent'>('all')
 
   // Get platform colors and icons
@@ -326,7 +326,17 @@ export default function CreatorProfileClient({
         </div>
       </div>
       
-      <Toast />
+      {/* Toast Notifications */}
+      <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

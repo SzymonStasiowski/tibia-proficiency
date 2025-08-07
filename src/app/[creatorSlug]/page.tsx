@@ -45,10 +45,18 @@ export default async function CreatorProfilePage({ params }: CreatorProfilePageP
       .eq('creator_slug', creatorSlug)
       .single()
 
+    // Transform the votes data to match the expected type
+    const transformedCreatorVotes = (creatorVotes || []).map(vote => ({
+      ...vote,
+      selected_perks: Array.isArray(vote.selected_perks) 
+        ? vote.selected_perks.filter((perk): perk is string => typeof perk === 'string')
+        : []
+    }))
+
     return (
       <CreatorProfileClient 
         creator={creator}
-        creatorVotes={creatorVotes || []}
+        creatorVotes={transformedCreatorVotes}
         creatorStats={creatorStats}
       />
     )

@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { Tables, InsertTables } from '@/lib/database.types'
+import { Tables, TablesInsert } from '@/lib/database.types'
 
 // Types for builds
 export type Build = Tables<'builds'>
-export type BuildInsert = InsertTables<'builds'>
+export type BuildInsert = TablesInsert<'builds'>
 export type BuildVote = Tables<'build_votes'>
 export type PopularBuild = Tables<'popular_builds'>
 

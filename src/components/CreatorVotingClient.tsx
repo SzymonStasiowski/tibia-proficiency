@@ -14,7 +14,7 @@ interface CreatorVotingClientProps {
 
 export default function CreatorVotingClient({ creatorToken }: CreatorVotingClientProps) {
   const router = useRouter()
-  const { showError } = useToast()
+  const { error: showError } = useToast()
   const [selectedWeaponSlug, setSelectedWeaponSlug] = useState<string | null>(null)
   
   // Fetch creator data
@@ -77,16 +77,16 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                {creator.avatar_url && (
+                {creator?.avatar_url && (
                   <img
-                    src={creator.avatar_url}
-                    alt={creator.channel_name}
+                    src={creator?.avatar_url}
+                    alt={creator?.channel_name}
                     className="w-12 h-12 rounded-full border-2 border-yellow-400"
                   />
                 )}
                 <div>
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                    🎮 {creator.channel_name} - Creator Voting
+                    🎮 {creator?.channel_name} - Creator Voting
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Your votes will be featured as "Creator's Choice"
@@ -120,16 +120,16 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
         {/* Creator Welcome Section */}
         <div className="text-center mb-12">
           <div className="flex justify-center items-center mb-6">
-            {creator.avatar_url && (
+                            {creator?.avatar_url && (
               <img
-                src={creator.avatar_url}
-                alt={creator.channel_name}
+                src={creator?.avatar_url}
+                alt={creator?.channel_name}
                 className="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg mr-6"
               />
             )}
             <div className="text-left">
               <h1 className="text-4xl md:text-5xl font-bold mb-2">
-                Welcome, <span className="text-yellow-600">{creator.channel_name}!</span>
+                Welcome, <span className="text-yellow-600">{creator?.channel_name}!</span>
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-300">
                 🎯 Creator Voting Dashboard
@@ -168,7 +168,7 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
             </p>
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 max-w-lg mx-auto">
               <code className="text-blue-600 dark:text-blue-400 font-mono">
-                tibiavote.com/{creator.creator_slug}
+                tibiavote.com/{creator?.creator_slug}
               </code>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">

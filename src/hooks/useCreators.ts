@@ -69,15 +69,18 @@ export function useCreatorStats(creatorSlug?: string) {
   return useQuery({
     queryKey: creatorSlug ? [...creatorKeys.stats(), creatorSlug] : creatorKeys.stats(),
     queryFn: async () => {
-      let query = supabase.from('creator_stats').select('*')
-      
       if (creatorSlug) {
-        query = query.eq('creator_slug', creatorSlug).single()
-        const { data, error } = await query
+        const { data, error } = await supabase
+          .from('creator_stats')
+          .select('*')
+          .eq('creator_slug', creatorSlug)
+          .single()
         if (error) throw error
         return data
       } else {
-        const { data, error } = await query
+        const { data, error } = await supabase
+          .from('creator_stats')
+          .select('*')
         if (error) throw error
         return data
       }
