@@ -376,17 +376,42 @@ export default function WeaponClient({
                             <p className="text-gray-400 mb-3">{build.description}</p>
                           )}
                           
-                          {/* Situation Tags */}
+                          {/* Build Type and Situation Tags */}
                           {build.situation_tags && build.situation_tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {build.situation_tags.map((tag) => (
-                                <span 
-                                  key={tag}
-                                  className="px-2 py-1 bg-blue-600 text-blue-100 rounded text-xs font-medium"
-                                >
-                                  {tag.replace('_', ' ')}
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                              {/* Primary Build Type Badge */}
+                              {build.situation_tags.includes('solo') && (
+                                <span className="px-3 py-1 bg-green-600 text-white rounded-full text-sm font-semibold">
+                                  👤 Solo
                                 </span>
-                              ))}
+                              )}
+                              {build.situation_tags.includes('team') && (
+                                <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-semibold">
+                                  👥 Team
+                                </span>
+                              )}
+                              {build.situation_tags.includes('bosses') && (
+                                <span className="px-3 py-1 bg-red-600 text-white rounded-full text-sm font-semibold">
+                                  👹 Boss
+                                </span>
+                              )}
+                              {build.situation_tags.includes('pvp') && (
+                                <span className="px-3 py-1 bg-purple-600 text-white rounded-full text-sm font-semibold">
+                                  ⚔️ PvP
+                                </span>
+                              )}
+                              
+                              {/* Secondary Tags */}
+                              {build.situation_tags
+                                .filter(tag => !['solo', 'team', 'bosses', 'pvp'].includes(tag))
+                                .map((tag) => (
+                                  <span 
+                                    key={tag}
+                                    className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs"
+                                  >
+                                    {tag.replace('_', ' ')}
+                                  </span>
+                                ))}
                             </div>
                           )}
                         </div>
