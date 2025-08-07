@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser, useWeaponBuilds, useUserBuildVotes } from '@/hooks'
+import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser, useWeaponBuilds, useUserBuildVotes, useVoteForBuild, useCreateBuild, SITUATION_TAGS } from '@/hooks'
 import { useSubmitCreatorVote } from '@/hooks/useCreators'
 import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
@@ -47,10 +47,18 @@ export default function WeaponClient({
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
   const [showResults, setShowResults] = useState(false)
   const [mode, setMode] = useState<'perks' | 'builds'>('perks') // Toggle between perk voting and builds
+  const [showCreateBuild, setShowCreateBuild] = useState(false)
+  const [buildForm, setBuildForm] = useState({
+    name: '',
+    description: '',
+    situationTags: [] as string[]
+  })
   
   // Builds-related hooks
   const { data: builds, isLoading: buildsLoading } = useWeaponBuilds(weaponData?.id || '')
   const { data: userBuildVotes, isLoading: userBuildVotesLoading } = useUserBuildVotes(userSession)
+  const voteForBuildMutation = useVoteForBuild()
+  const createBuildMutation = useCreateBuild()
   
   // Toast system
   const { toasts, removeToast, success, error: showError, info } = useToast()
@@ -194,6 +202,78 @@ export default function WeaponClient({
     }
   }
 
+  const handleBuildVote = async (buildId: string) => {
+    if (!userSession) {
+      showError('Unable to vote. Please refresh the page and try again.')
+      return
+    }
+
+    if (userBuildVotes?.includes(buildId)) {
+      showError('You have already voted for this build.')
+      return
+    }
+
+    try {
+      await voteForBuildMutation.mutateAsync({
+        build_id: buildId,
+        user_session: userSession,
+        creator_id: isCreatorMode ? creatorToken : undefined
+      })
+      
+      success('✅ Vote submitted successfully!')
+    } catch (error: any) {
+      showError(error.message || 'Failed to submit vote. Please try again.')
+    }
+  }
+
+  const handleCreateBuild = async () => {
+    if (!userSession || !weaponData?.id) {
+      showError('Unable to create build. Please refresh the page and try again.')
+      return
+    }
+
+    if (!buildForm.name.trim()) {
+      showError('Please enter a name for your build.')
+      return
+    }
+
+    if (selectedPerks.length === 0) {
+      showError('Please select some perks for your build.')
+      return
+    }
+
+    try {
+      await createBuildMutation.mutateAsync({
+        weapon_id: weaponData.id,
+        name: buildForm.name.trim(),
+        description: buildForm.description.trim() || undefined,
+        situation_tags: buildForm.situationTags.length > 0 ? buildForm.situationTags : undefined,
+        selected_perks: selectedPerks,
+        user_session: userSession,
+        creator_id: isCreatorMode ? creatorToken : undefined
+      })
+      
+      success('🎉 Build created successfully!')
+      
+      // Reset form and switch to builds mode to see the new build
+      setBuildForm({ name: '', description: '', situationTags: [] })
+      setShowCreateBuild(false)
+      setMode('builds')
+      
+    } catch (error: any) {
+      showError(error.message || 'Failed to create build. Please try again.')
+    }
+  }
+
+  const toggleSituationTag = (tag: string) => {
+    setBuildForm(prev => ({
+      ...prev,
+      situationTags: prev.situationTags.includes(tag)
+        ? prev.situationTags.filter(t => t !== tag)
+        : [...prev.situationTags, tag]
+    }))
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Special creator mode header */}
@@ -335,6 +415,15 @@ export default function WeaponClient({
                 >
                   🔄 Clear
                 </button>
+                
+                {selectedPerks.length > 0 && (
+                  <button
+                    onClick={() => setShowCreateBuild(true)}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-sm w-full sm:w-auto"
+                  >
+                    💾 Save as Build
+                  </button>
+                )}
               </div>
             </div>
           ) : !showResults ? (
@@ -425,10 +514,20 @@ export default function WeaponClient({
                       {/* Vote Button */}
                       <div className="flex justify-between items-center">
                         <button
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                          disabled={userBuildVotes?.includes(build.id)}
+                          onClick={() => handleBuildVote(build.id)}
+                          disabled={userBuildVotes?.includes(build.id) || voteForBuildMutation.isPending}
+                          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                            userBuildVotes?.includes(build.id)
+                              ? 'bg-green-600 text-white cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed'
+                          }`}
                         >
-                          {userBuildVotes?.includes(build.id) ? '✓ Voted' : '👍 Vote for this build'}
+                          {voteForBuildMutation.isPending 
+                            ? '⏳ Voting...' 
+                            : userBuildVotes?.includes(build.id) 
+                            ? '✅ Voted' 
+                            : '👍 Vote for this build'
+                          }
                         </button>
                         
                         <div className="text-sm text-gray-400">
@@ -460,6 +559,127 @@ export default function WeaponClient({
           )}
         </div>
       </div>
+
+      {/* Create Build Modal */}
+      {showCreateBuild && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Create New Build</h2>
+                <button
+                  onClick={() => setShowCreateBuild(false)}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              {/* Selected Perks Preview */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-white mb-3">Selected Perks ({selectedPerks.length})</h3>
+                <div className="bg-gray-700 rounded-lg p-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedPerks.map(perkId => {
+                      const perk = perksData?.find(p => p.id === perkId)
+                      return perk ? (
+                        <div key={perkId} className="text-sm text-gray-300">
+                          • {perk.name} (Slot {perk.tier_level + 1})
+                        </div>
+                      ) : null
+                    })}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Build Form */}
+              <div className="space-y-4">
+                {/* Build Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Build Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={buildForm.name}
+                    onChange={(e) => setBuildForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Ice Damage Solo Hunter"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={100}
+                  />
+                </div>
+                
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    value={buildForm.description}
+                    onChange={(e) => setBuildForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe when and how to use this build..."
+                    rows={3}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                {/* Situation Tags */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Build Tags (Select all that apply)
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Object.entries({
+                      [SITUATION_TAGS.SOLO]: '👤 Solo',
+                      [SITUATION_TAGS.TEAM]: '👥 Team', 
+                      [SITUATION_TAGS.BOSSES]: '👹 Bosses',
+                      [SITUATION_TAGS.PVP]: '⚔️ PvP',
+                      [SITUATION_TAGS.HUNTING]: '🏹 Hunting',
+                      [SITUATION_TAGS.ICE_DAMAGE]: '❄️ Ice',
+                      [SITUATION_TAGS.EARTH_DAMAGE]: '🌍 Earth',
+                      [SITUATION_TAGS.FIRE_DAMAGE]: '🔥 Fire',
+                      [SITUATION_TAGS.PHYSICAL_DAMAGE]: '💪 Physical',
+                      [SITUATION_TAGS.PROFIT]: '💰 Profit',
+                      [SITUATION_TAGS.EXPERIENCE]: '⭐ XP',
+                      [SITUATION_TAGS.LOW_LEVEL]: '📈 Low Lvl',
+                      [SITUATION_TAGS.HIGH_LEVEL]: '🎯 High Lvl'
+                    }).map(([tag, label]) => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleSituationTag(tag)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          buildForm.situationTags.includes(tag)
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-6 pt-6 border-t border-gray-700">
+                <button
+                  onClick={() => setShowCreateBuild(false)}
+                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateBuild}
+                  disabled={!buildForm.name.trim() || createBuildMutation.isPending}
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                >
+                  {createBuildMutation.isPending ? '⏳ Creating...' : '🎉 Create Build'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notifications */}
       <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
