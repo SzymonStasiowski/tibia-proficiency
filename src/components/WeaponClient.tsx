@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useUserWeaponVote, useWeaponVotes } from '@/hooks'
+import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser } from '@/hooks'
 import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
 import VotingResults from '@/components/VotingResults'
@@ -31,9 +31,8 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
   const isLoadingWeapon = weaponLoading && !initialWeapon
   const isLoadingPerks = perksLoading && !initialPerks
   
-  // Check if user has already voted for this weapon
-  const { data: existingVote } = useUserWeaponVote(weaponData?.id || '', userSession)
-  const { data: allVotes } = useWeaponVotes(weaponData?.id || '')
+  // Check if user has already voted for this weapon - optimized to use single request
+  const { allVotes, userVote: existingVote, isLoading: votesLoading } = useWeaponVotesWithUser(weaponData?.id || '', userSession)
   
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
   const [showResults, setShowResults] = useState(false)
@@ -171,9 +170,9 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
                 ←
               </button>
               <div className="w-px h-6 bg-gray-600"></div>
-              <h1 className="text-xl font-bold">
+              <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity cursor-pointer">
                 <span style={{ color: '#c1121f' }}>tibia</span><span style={{ color: '#fdf0d5' }}>vote</span>
-              </h1>
+              </Link>
             </div>
             
             <div className="flex items-center gap-3">
@@ -234,6 +233,13 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
                         ? existingVote ? '🔄 Update Vote' : '🗳️ Submit Vote'
                         : `Fill All Slots (${selectedTiers.length}/${availableTiers.length})`
                   }
+                </button>
+                
+                <button
+                  onClick={() => setShowResults(true)}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 text-sm w-full sm:w-auto"
+                >
+                  📊 View Results
                 </button>
                 
                 <button

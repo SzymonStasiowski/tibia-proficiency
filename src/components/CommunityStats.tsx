@@ -1,4 +1,5 @@
-import { formatNumber } from '@/lib/utils'
+import { formatNumber, weaponNameToSlug } from '@/lib/utils'
+import Link from 'next/link'
 
 interface CommunityStats {
   totalVotes: number
@@ -34,14 +35,21 @@ export default function CommunityStats({ stats }: CommunityStatsProps) {
           
           <div className="flex items-center gap-2">
             <span className="text-blue-500 font-semibold">Most voted:</span>
-            <span className="text-gray-700 dark:text-gray-300">
-              {stats.mostVotedWeapon?.name || 'No votes yet'}
-              {stats.mostVotedWeapon && (
+            {stats.mostVotedWeapon ? (
+              <span className="text-gray-700 dark:text-gray-300">
+                <Link 
+                  href={`/weapon/${weaponNameToSlug(stats.mostVotedWeapon.name)}`}
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline decoration-blue-600/30 hover:decoration-blue-600"
+                >
+                  {stats.mostVotedWeapon.name}
+                </Link>
                 <span className="text-xs text-gray-500 ml-1">
                   ({stats.mostVotedWeapon.votes} votes)
                 </span>
-              )}
-            </span>
+              </span>
+            ) : (
+              <span className="text-gray-700 dark:text-gray-300">No votes yet</span>
+            )}
           </div>
         </div>
         

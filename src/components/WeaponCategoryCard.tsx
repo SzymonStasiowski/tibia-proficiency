@@ -100,12 +100,9 @@ export default function WeaponCategoryCard({ category, onClick }: WeaponCategory
         <h3 className={`text-xl font-bold ${style.textColor} mb-2`}>
           {category.name}
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
+        <p className="text-gray-600 dark:text-gray-400 text-sm">
           {category.weaponCount} weapons
         </p>
-        <span className={`inline-block ${style.badge} px-3 py-1 rounded-full text-xs font-medium shadow-sm`}>
-          Available
-        </span>
       </div>
     </div>
   )

@@ -49,7 +49,7 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Hero Section */}
-      <div className="container mx-auto px-4 pt-12 pb-8">
+      <div className="container mx-auto px-4 pt-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
             <span style={{ color: '#c1121f' }}>tibia</span><span style={{ color: '#fdf0d5' }}>vote</span>
@@ -78,10 +78,7 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
 
       {/* Weapon Categories Grid */}
       <div className="container mx-auto px-4 pb-12">
-        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-gray-200">
-          Choose Your Weapon Type
-        </h2>
-        
+
         {isLoadingCategories ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>

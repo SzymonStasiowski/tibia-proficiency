@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 
 // Types for votes
@@ -80,14 +81,32 @@ export function useUserWeaponVote(weaponId: string, userSession: string) {
         .select('*')
         .eq('weapon_id', weaponId)
         .eq('user_session', userSession)
-        .single()
+        .maybeSingle()
       
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) throw error
       
       return data
     },
     enabled: !!weaponId && !!userSession,
   })
+}
+
+// Optimized hook that gets both all votes and user's vote with single request
+export function useWeaponVotesWithUser(weaponId: string, userSession: string) {
+  const allVotesQuery = useWeaponVotes(weaponId)
+  
+  // Derive user's vote from all votes data
+  const userVote = useMemo(() => {
+    if (!allVotesQuery.data || !userSession) return null
+    return allVotesQuery.data.find(vote => vote.user_session === userSession) || null
+  }, [allVotesQuery.data, userSession])
+  
+  return {
+    allVotes: allVotesQuery.data || [],
+    userVote,
+    isLoading: allVotesQuery.isLoading,
+    error: allVotesQuery.error,
+  }
 }
 
 // Submit a vote
