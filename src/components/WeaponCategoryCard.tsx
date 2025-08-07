@@ -70,9 +70,9 @@ export default function WeaponCategoryCard({ category, onClick }: WeaponCategory
         badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-800 dark:text-indigo-300'
       }
     }
-    if (lowerName.includes('spear')) {
+    if (lowerName.includes('fist')) {
       return {
-        icon: '🗡️',
+        icon: '👊',
         bgColor: 'bg-pink-50 hover:bg-pink-100 border-pink-200 dark:bg-pink-900/20 dark:hover:bg-pink-900/30 dark:border-pink-800',
         textColor: 'text-pink-600 dark:text-pink-400',
         badge: 'bg-pink-100 text-pink-700 dark:bg-pink-800 dark:text-pink-300'

@@ -172,7 +172,7 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
               </button>
               <div className="w-px h-6 bg-gray-600"></div>
               <h1 className="text-xl font-bold">
-                <span className="text-purple-400">tibia</span><span className="text-cyan-400">vote</span>
+                <span style={{ color: '#c1121f' }}>tibia</span><span style={{ color: '#fdf0d5' }}>vote</span>
               </h1>
             </div>
             
@@ -194,7 +194,7 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
           {/* Compact Progress */}
           {!showResults && (
             <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 mb-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <h2 className="text-lg font-semibold text-white">Build Your Weapon</h2>
                 <div className="text-sm text-gray-400">
                   {selectedTiers.length}/{availableTiers.length} slots filled
@@ -214,14 +214,14 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
               />
               
               {/* Compact Action Buttons */}
-              <div className="mt-6 flex items-center justify-center gap-3">
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   onClick={handleSubmitVote}
                   disabled={!allSlotsFilled || submitVoteMutation.isPending || !userSession}
                   className={`
-                    px-6 py-2 rounded-lg font-medium transition-all duration-200 text-sm
+                    px-6 py-2 rounded-lg font-medium transition-all duration-200 text-sm w-full sm:w-auto
                     ${allSlotsFilled && userSession
-                      ? 'bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white shadow-lg disabled:opacity-50'
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg disabled:opacity-50'
                       : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                     }
                   `}
@@ -239,7 +239,7 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
                 <button
                   onClick={() => setSelectedPerks([])}
                   disabled={selectedPerks.length === 0}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors text-sm"
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors text-sm w-full sm:w-auto"
                 >
                   🔄 Clear
                 </button>

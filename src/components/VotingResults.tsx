@@ -188,9 +188,9 @@ export default function VotingResults({ perks, votes, isVisible = true, onEditVo
   return (
     <div ref={resultsRef} className="bg-gray-800 rounded-lg border border-gray-700">
       {/* Compact Header */}
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="p-4 md:p-6 border-b border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 md:gap-4">
             <TrophyIcon className="w-5 h-5 text-purple-400" />
             <h3 className="text-lg font-bold text-white">Community Results</h3>
             <div className="text-sm text-gray-400">
@@ -200,7 +200,7 @@ export default function VotingResults({ perks, votes, isVisible = true, onEditVo
           {onEditVote && (
             <button
               onClick={onEditVote}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium w-full sm:w-auto"
             >
               ✏️ Edit Vote
             </button>
@@ -208,37 +208,58 @@ export default function VotingResults({ perks, votes, isVisible = true, onEditVo
         </div>
       </div>
 
-      {/* Content with Vertical Tabs */}
+      {/* Content with Vertical Tabs (Desktop) / Horizontal Tabs (Mobile) */}
       {activeSlotData && (
-        <div className="flex">
-          {/* Vertical Tabs */}
-          <div className="w-24 border-r border-gray-700">
-            {availableSlots.map((slot) => (
-              <button
-                key={slot}
-                onClick={() => setActiveSlot(slot)}
-                className={`w-full p-4 text-center font-medium transition-all duration-300 relative ${
-                  activeSlot === slot
-                    ? 'text-white bg-gradient-to-r from-purple-500/20 to-cyan-500/20'
-                    : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
-                }`}
-              >
-                {/* Active indicator */}
-                {activeSlot === slot && (
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-purple-500 to-cyan-500 rounded-r-full" />
-                )}
-                
-                <div className="text-2xl font-bold">{slot + 1}</div>
-              </button>
-            ))}
+        <div>
+          {/* Mobile Horizontal Tabs */}
+          <div className="block md:hidden mt-4 px-4">
+            <div className="flex overflow-x-auto gap-2 pb-2">
+              {availableSlots.map((slot) => (
+                <button
+                  key={slot}
+                  onClick={() => setActiveSlot(slot)}
+                  className={`flex-shrink-0 px-4 py-3 text-center font-medium transition-all duration-300 rounded-lg ${
+                    activeSlot === slot
+                      ? 'text-white bg-blue-600'
+                      : 'text-gray-400 bg-gray-700 hover:text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  <div className="text-base font-bold">Slot {slot + 1}</div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 p-4">
-            <div 
-              key={activeSlot} 
-              className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in duration-300"
-            >
+          {/* Desktop Layout */}
+          <div className="hidden md:flex">
+            {/* Vertical Tabs */}
+            <div className="w-24 border-r border-gray-700">
+              {availableSlots.map((slot) => (
+                <button
+                  key={slot}
+                  onClick={() => setActiveSlot(slot)}
+                  className={`w-full p-4 text-center font-medium transition-all duration-300 relative ${
+                    activeSlot === slot
+                      ? 'text-white bg-blue-600/20'
+                      : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
+                  }`}
+                >
+                  {/* Active indicator */}
+                  {activeSlot === slot && (
+                    <div className="absolute left-0 top-0 w-1 h-full bg-blue-600 rounded-r-full" />
+                  )}
+                  
+                  <div className="text-2xl font-bold">{slot + 1}</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 p-4">
+              <div 
+                key={activeSlot} 
+                className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in duration-300"
+              >
               {/* Pie Chart */}
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -299,6 +320,84 @@ export default function VotingResults({ perks, votes, isVisible = true, onEditVo
                   </div>
                 ))}
               </div>
+            </div>
+            </div>
+          </div>
+
+          {/* Mobile Content */}
+          <div className="block md:hidden p-4">
+            <div 
+              key={activeSlot} 
+              className="space-y-4 animate-in fade-in duration-300"
+            >
+              {/* Results List for Mobile */}
+              <div className="space-y-3">
+                {resultsByTier[activeSlot]?.map((perk, index) => (
+                  <div
+                    key={perk.id}
+                    className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg"
+                  >
+                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: perk.color }} />
+                    
+                    {perk.main_icon_url && (
+                      <img 
+                        src={perk.main_icon_url} 
+                        alt={perk.name}
+                        className="w-8 h-8 object-contain flex-shrink-0"
+                        crossOrigin="anonymous"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                        }}
+                      />
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white font-medium text-base">{perk.name}</h4>
+                      {perk.description && (
+                        <p className="text-sm text-gray-400 leading-relaxed mt-1">{perk.description}</p>
+                      )}
+                    </div>
+
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-xl font-bold text-blue-400">{perk.percentage}%</div>
+                      <div className="text-xs text-gray-500">{perk.vote_count} votes</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Mobile Chart */}
+              {activeSlotData?.data && activeSlotData.data.length > 0 && (
+                <div className="bg-gray-700 rounded-lg p-4 mt-4">
+                  <h4 className="text-white font-medium text-sm mb-3 text-center">
+                    Slot {activeSlot + 1} Distribution
+                  </h4>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={activeSlotData.data}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={70}
+                          innerRadius={30}
+                          fill="#8884d8"
+                          dataKey="votes"
+                          stroke="none"
+                          strokeWidth={0}
+                        >
+                          {activeSlotData.data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

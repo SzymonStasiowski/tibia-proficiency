@@ -6,7 +6,6 @@ import { useWeaponCategories, useCommunityStats, useWeapons } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 import WeaponCategoryCard from '@/components/WeaponCategoryCard'
 import CommunityStats from '@/components/CommunityStats'
-import DonationCard from '@/components/DonationCard'
 import WeaponSelect from '@/components/WeaponSelect'
 
 interface HomeClientProps {
@@ -53,7 +52,7 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
       <div className="container mx-auto px-4 pt-12 pb-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            <span className="text-purple-500">tibia</span><span className="text-cyan-500">vote</span>
+            <span style={{ color: '#c1121f' }}>tibia</span><span style={{ color: '#fdf0d5' }}>vote</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
             Help the community choose the best perk combinations for every weapon. 
@@ -69,7 +68,7 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
               onClick={handleRandomWeapon}
-              className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-semibold transition-colors shadow-lg"
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold transition-colors shadow-lg"
             >
               🎲 Random Weapon
             </button>
@@ -100,25 +99,22 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
           </div>
         )}
 
-        {/* Community Stats and Donation */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-          <div className="lg:col-span-2">
-            {isLoadingStats ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-gray-600 mt-4">Loading community stats...</p>
-              </div>
-            ) : statsData ? (
+        {/* Community Stats */}
+        <div className="mb-12">
+          {isLoadingStats ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center max-w-4xl mx-auto">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Loading community stats...</p>
+            </div>
+          ) : statsData ? (
+            <div className="max-w-4xl mx-auto">
               <CommunityStats stats={statsData} />
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center">
-                <p className="text-gray-600">Unable to load community stats</p>
-              </div>
-            )}
-          </div>
-          <div>
-            <DonationCard />
-          </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center max-w-4xl mx-auto">
+              <p className="text-gray-600">Unable to load community stats</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
