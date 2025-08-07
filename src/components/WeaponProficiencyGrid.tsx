@@ -2,48 +2,60 @@ import { Weapon, Perk } from '@/hooks/useWeapons'
 import { Perk as DatabasePerk } from '@/hooks/usePerks'
 import PerkSlot from './PerkSlot'
 import PerkIcon from './PerkIcon'
-import { useState } from 'react'
+import SmartTooltip from './SmartTooltip'
+import { useState, useMemo } from 'react'
 
 // Database Perk Slot Component
 interface DatabasePerkSlotProps {
   perk: DatabasePerk
   isSelected?: boolean
   onClick?: () => void
+  percentage?: number
+  showPercentage?: boolean
 }
 
-function DatabasePerkSlot({ perk, isSelected = false, onClick }: DatabasePerkSlotProps) {
+function DatabasePerkSlot({ perk, isSelected = false, onClick, percentage = 0, showPercentage = false }: DatabasePerkSlotProps) {
   const [showTooltip, setShowTooltip] = useState(false)
 
-  return (
-    <div className="relative">
-      {/* Main Perk Container */}
-      <div
-        className={`
-          relative w-16 h-16 cursor-pointer transition-all duration-300
-          ${isSelected ? 'hover:scale-105' : 'grayscale hover:scale-105 hover:grayscale-0'}
-        `}
-        onClick={onClick}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
-        {/* Main Icon with Fallback */}
-        <PerkIcon
-          iconUrl={perk.main_icon_url || ''}
-          altText={perk.name}
-          overlayIcon={perk.type_icon_url}
-        />
-      </div>
+  const tooltipContent = (
+    <div>
+      <div className="font-semibold text-yellow-300 mb-1">{perk.name}</div>
+      <div className="text-gray-300 text-sm leading-relaxed mb-2">{perk.description}</div>
+      <div className="text-xs text-gray-500 border-t border-gray-700 pt-1">{perk.vote_count} votes</div>
+    </div>
+  )
 
-      {/* Tooltip */}
-      {showTooltip && (
-        <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg border border-gray-700 whitespace-nowrap shadow-lg">
-          <div className="font-semibold text-yellow-300">{perk.name}</div>
-          <div className="text-gray-300">{perk.description}</div>
-          <div className="text-xs text-gray-500 mt-1">{perk.vote_count} votes</div>
-          {/* Tooltip arrow */}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+  return (
+    <div className="relative flex justify-center">
+      <SmartTooltip content={tooltipContent} isVisible={showTooltip}>
+        {/* Main Perk Container */}
+        <div
+          className={`
+            relative w-20 h-20 cursor-pointer flex justify-center items-center transition-all duration-300 rounded-lg p-1
+            ${isSelected 
+              ? 'hover:scale-105 border-2 border-yellow-400 shadow-lg shadow-yellow-400/50' 
+              : 'grayscale hover:scale-105 hover:grayscale-0 border-2 border-transparent'
+            }
+          `}
+          onClick={onClick}
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+        >
+          {/* Main Icon with Fallback */}
+          <PerkIcon
+            iconUrl={perk.main_icon_url || ''}
+            altText={perk.name}
+            overlayIcon={perk.type_icon_url}
+          />
+          
+          {/* Percentage Overlay */}
+          {showPercentage && (
+            <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full border border-gray-800">
+              {percentage}%
+            </div>
+          )}
         </div>
-      )}
+      </SmartTooltip>
     </div>
   )
 }
@@ -53,14 +65,16 @@ interface MobilePerkOptionProps {
   perk: DatabasePerk
   isSelected?: boolean
   onClick?: () => void
+  percentage?: number
+  showPercentage?: boolean
 }
 
-function MobilePerkOption({ perk, isSelected = false, onClick }: MobilePerkOptionProps) {
+function MobilePerkOption({ perk, isSelected = false, onClick, percentage = 0, showPercentage = false }: MobilePerkOptionProps) {
   return (
     <div 
       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
         isSelected 
-          ? 'bg-blue-600/20 border border-blue-500' 
+          ? 'bg-yellow-400/10 border-2 border-yellow-400 shadow-lg shadow-yellow-400/20' 
           : 'bg-gray-600 border border-gray-500 hover:bg-gray-500'
       }`}
       onClick={onClick}
@@ -77,7 +91,14 @@ function MobilePerkOption({ perk, isSelected = false, onClick }: MobilePerkOptio
       
       {/* Perk Details */}
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-yellow-300 text-sm">{perk.name}</div>
+        <div className="flex items-center justify-between">
+          <div className="font-semibold text-yellow-300 text-sm">{perk.name}</div>
+          {showPercentage && (
+            <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+              {percentage}%
+            </div>
+          )}
+        </div>
         <div className="text-gray-300 text-xs leading-relaxed">{perk.description}</div>
         <div className="text-xs text-gray-500 mt-1">{perk.vote_count} votes</div>
       </div>
@@ -90,13 +111,15 @@ interface WeaponProficiencyGridProps {
   perks: DatabasePerk[]
   onPerkSelect?: (perkId: string) => void
   selectedPerks?: string[] // Array of perk IDs
+  votes?: any[] // Array of all votes for percentage calculation
 }
 
 export default function WeaponProficiencyGrid({ 
   weapon, 
   perks,
   onPerkSelect, 
-  selectedPerks = [] 
+  selectedPerks = [],
+  votes = []
 }: WeaponProficiencyGridProps) {
   // Group perks by tier level (1-7 slots)
   const perksByTier = perks.reduce((acc, perk) => {
@@ -107,6 +130,36 @@ export default function WeaponProficiencyGrid({
     acc[tier].push(perk)
     return acc
   }, {} as Record<number, DatabasePerk[]>)
+
+  // Calculate percentages for each perk
+  const perkPercentages = useMemo(() => {
+    if (!votes.length) return {}
+    
+    // Count votes for each perk
+    const perkVoteCounts = votes.reduce((acc, vote) => {
+      if (vote.selected_perks && Array.isArray(vote.selected_perks)) {
+        vote.selected_perks.forEach((perkId: string) => {
+          acc[perkId] = (acc[perkId] || 0) + 1
+        })
+      }
+      return acc
+    }, {} as Record<string, number>)
+
+    // Calculate percentages by tier
+    const percentages: Record<string, number> = {}
+    Object.entries(perksByTier).forEach(([tierStr, tierPerks]) => {
+      const totalTierVotes = tierPerks.reduce((sum, perk) => {
+        return sum + (perkVoteCounts[perk.id] || 0)
+      }, 0)
+      
+      tierPerks.forEach((perk) => {
+        const voteCount = perkVoteCounts[perk.id] || 0
+        percentages[perk.id] = totalTierVotes > 0 ? Math.round((voteCount / totalTierVotes) * 100) : 0
+      })
+    })
+    
+    return percentages
+  }, [votes, perksByTier])
 
   const handlePerkClick = (perkId: string) => {
     onPerkSelect?.(perkId)
@@ -148,6 +201,8 @@ export default function WeaponProficiencyGrid({
                     perk={perk}
                     isSelected={selectedPerks.includes(perk.id)}
                     onClick={() => handlePerkClick(perk.id)}
+                    percentage={perkPercentages[perk.id] || 0}
+                    showPercentage={tierPerks.length > 1 && votes.length > 0}
                   />
                 ))}
               </div>
@@ -184,6 +239,8 @@ export default function WeaponProficiencyGrid({
                       perk={perk}
                       isSelected={selectedPerks.includes(perk.id)}
                       onClick={() => handlePerkClick(perk.id)}
+                      percentage={perkPercentages[perk.id] || 0}
+                      showPercentage={tierPerks.length > 1 && votes.length > 0}
                     />
                   ))
                 ) : (

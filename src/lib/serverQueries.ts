@@ -221,3 +221,19 @@ export async function getHotWeapons(limit: number = 10) {
     return []
   }
 }
+
+export async function getPopularBuilds(limit: number = 10) {
+  try {
+    const { data, error } = await supabaseServer
+      .from('popular_builds')
+      .select('*')
+      .order('vote_count', { ascending: false })
+      .limit(limit)
+    
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching popular builds:', error)
+    return []
+  }
+}

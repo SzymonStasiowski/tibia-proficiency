@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Jersey_25 } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import StructuredData from "@/components/StructuredData";
@@ -15,6 +15,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const jersey25 = Jersey_25({
+  variable: "--font-jersey",
+  subsets: ["latin"],
+  weight: "400", // Jersey 25 is a single weight font
 });
 
 export const metadata: Metadata = {
@@ -80,7 +86,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${jersey25.variable} ${geistSans.variable} ${geistMono.variable} ${jersey25.className} antialiased min-h-screen flex flex-col`}
       >
         <QueryProvider>
           <div className="flex-1">

@@ -24,7 +24,7 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <h3 className="text-xl font-bold">
-                <span style={{ color: '#c1121f' }}>tibia</span><span style={{ color: '#fdf0d5' }}>vote</span>
+                <span style={{ color: '#9146FF' }}>tibia</span><span style={{ color: '#53FC18' }}>vote</span>
               </h3>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">

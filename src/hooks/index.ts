@@ -4,6 +4,8 @@ export * from './useVotes'
 export * from './useSession'
 export * from './useDebounce'
 export * from './useToast'
+export * from './useCreators'
+export * from './useBuilds'
 
 // Export usePerks separately to avoid naming conflicts
 export { useWeaponPerks } from './usePerks'

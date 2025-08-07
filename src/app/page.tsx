@@ -1,19 +1,19 @@
-import { getWeaponCategories, getCommunityStats, getHotWeapons } from '@/lib/serverQueries'
+import { getWeaponCategories, getHotWeapons, getPopularBuilds } from '@/lib/serverQueries'
 import HomeClient from '@/components/HomeClient'
 
 export default async function Home() {
   // Fetch data on the server
-  const [initialCategories, initialStats, initialHotWeapons] = await Promise.all([
+  const [initialCategories, initialHotWeapons, initialPopularBuilds] = await Promise.all([
     getWeaponCategories(),
-    getCommunityStats(),
-    getHotWeapons(10)
+    getHotWeapons(10),
+    getPopularBuilds(10)
   ])
 
   return (
     <HomeClient 
       initialCategories={initialCategories}
-      initialStats={initialStats}
       initialHotWeapons={initialHotWeapons}
+      initialPopularBuilds={initialPopularBuilds}
     />
   )
 }

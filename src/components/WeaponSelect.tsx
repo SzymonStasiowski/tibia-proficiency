@@ -7,10 +7,11 @@ import { useAllWeapons } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 
 interface WeaponSelectProps {
-  onWeaponSelect?: () => void
+  onWeaponSelect?: (weaponName: string) => void
+  placeholder?: string
 }
 
-export default function WeaponSelect({ onWeaponSelect }: WeaponSelectProps) {
+export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSelectProps) {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -77,9 +78,14 @@ export default function WeaponSelect({ onWeaponSelect }: WeaponSelectProps) {
     setQuery('')
     setIsOpen(false)
     setSelectedIndex(-1)
-    onWeaponSelect?.()
-    // Navigate to weapon page
-    router.push(`/weapon/${weaponNameToSlug(weapon.name)}`)
+    
+    if (onWeaponSelect) {
+      // If callback provided, use it (for creator mode)
+      onWeaponSelect(weapon.name)
+    } else {
+      // Otherwise navigate normally
+      router.push(`/weapon/${weaponNameToSlug(weapon.name)}`)
+    }
   }
 
   // Close dropdown when clicking outside
@@ -102,7 +108,7 @@ export default function WeaponSelect({ onWeaponSelect }: WeaponSelectProps) {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Select a weapon... (e.g., 'Cobra Rod', 'Falcon Battleaxe')"
+          placeholder={placeholder || "Select a weapon... (e.g., 'Cobra Rod', 'Falcon Battleaxe')"}
           value={query}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
