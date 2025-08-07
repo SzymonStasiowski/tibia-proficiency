@@ -172,6 +172,102 @@ export type Database = {
           }
         ]
       }
+      builds: {
+        Row: {
+          id: string
+          weapon_id: string
+          name: string
+          description: string | null
+          situation_tags: string[] | null
+          selected_perks: Json
+          creator_id: string | null
+          user_session: string | null
+          vote_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          weapon_id: string
+          name: string
+          description?: string | null
+          situation_tags?: string[] | null
+          selected_perks: Json
+          creator_id?: string | null
+          user_session?: string | null
+          vote_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          weapon_id?: string
+          name?: string
+          description?: string | null
+          situation_tags?: string[] | null
+          selected_perks?: Json
+          creator_id?: string | null
+          user_session?: string | null
+          vote_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builds_weapon_id_fkey"
+            columns: ["weapon_id"]
+            isOneToOne: false
+            referencedRelation: "weapons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builds_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      build_votes: {
+        Row: {
+          id: string
+          build_id: string
+          user_session: string
+          creator_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          build_id: string
+          user_session: string
+          creator_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          build_id?: string
+          user_session?: string
+          creator_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "build_votes_build_id_fkey"
+            columns: ["build_id"]
+            isOneToOne: false
+            referencedRelation: "builds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_votes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       creator_stats: {
@@ -185,6 +281,36 @@ export type Database = {
           weapons_voted: number
           total_votes: number
           last_vote_at: string | null
+        }
+        Relationships: []
+      }
+      popular_builds: {
+        Row: {
+          id: string
+          weapon_id: string
+          name: string
+          description: string | null
+          situation_tags: string[] | null
+          selected_perks: Json
+          creator_id: string | null
+          user_session: string | null
+          vote_count: number
+          created_at: string
+          updated_at: string
+          weapon_name: string
+          weapon_type: string | null
+          weapon_image_url: string | null
+          creator_name: string | null
+          creator_slug: string | null
+          total_votes: number
+        }
+        Relationships: []
+      }
+      builds_by_situation: {
+        Row: {
+          situation_tag: string
+          build_count: number
+          avg_votes: number
         }
         Relationships: []
       }
