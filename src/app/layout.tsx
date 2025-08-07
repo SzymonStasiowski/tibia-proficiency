@@ -4,6 +4,8 @@ import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import StructuredData from "@/components/StructuredData";
 import Footer from "@/components/Footer";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -86,6 +88,8 @@ export default function RootLayout({
           </div>
           <Footer />
         </QueryProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
