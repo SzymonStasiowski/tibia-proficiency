@@ -264,6 +264,7 @@ export default function WeaponClient({ weaponSlug, initialWeapon, initialPerks }
               votes={allVotes} 
               isVisible={showResults}
               onEditVote={() => setShowResults(false)}
+              hasUserVoted={!!existingVote}
             />
           )}
         </div>

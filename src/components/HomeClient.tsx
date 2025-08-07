@@ -2,31 +2,36 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWeaponCategories, useCommunityStats, useWeapons } from '@/hooks'
+import { useWeaponCategories, useCommunityStats, useWeapons, useHotWeapons } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 import WeaponCategoryCard from '@/components/WeaponCategoryCard'
 import CommunityStats from '@/components/CommunityStats'
 import WeaponSelect from '@/components/WeaponSelect'
+import HotWeaponCard from '@/components/HotWeaponCard'
 
 interface HomeClientProps {
   initialCategories?: any[]
   initialStats?: any
+  initialHotWeapons?: any[]
 }
 
-export default function HomeClient({ initialCategories, initialStats }: HomeClientProps) {
+export default function HomeClient({ initialCategories, initialStats, initialHotWeapons }: HomeClientProps) {
   const router = useRouter()
   
   // Use initial data for React Query hooks
   const { data: categories, isLoading: categoriesLoading } = useWeaponCategories(initialCategories)
   const { data: stats, isLoading: statsLoading } = useCommunityStats()
   const { data: weapons, isLoading: weaponsLoading } = useWeapons()
+  const { data: hotWeapons, isLoading: hotWeaponsLoading } = useHotWeapons(10, initialHotWeapons)
   
   // Use server data as fallback if client data is loading
   const categoriesData = categories || initialCategories || []
   const statsData = stats || initialStats
   const weaponsData = weapons || []
+  const hotWeaponsData = hotWeapons || initialHotWeapons || []
   const isLoadingCategories = categoriesLoading && !initialCategories
   const isLoadingStats = statsLoading && !initialStats
+  const isLoadingHotWeapons = hotWeaponsLoading && !initialHotWeapons
 
   const handleCategoryClick = (categoryId: string) => {
     router.push(`/category/${categoryId}`)
@@ -95,6 +100,40 @@ export default function HomeClient({ initialCategories, initialStats }: HomeClie
             ))}
           </div>
         )}
+
+        {/* Hot Weapons Section */}
+        <div className="mb-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">
+              🔥 <span className="bg-gradient-to-r from-amber-500 to-yellow-500 bg-clip-text text-transparent">Hot Weapons</span>
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Most voted weapons by the community
+            </p>
+          </div>
+
+          {isLoadingHotWeapons ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Loading hot weapons...</p>
+            </div>
+          ) : hotWeaponsData && hotWeaponsData.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+              {hotWeaponsData.map((weapon, index) => (
+                <HotWeaponCard
+                  key={weapon.id}
+                  weapon={weapon}
+                  rank={index + 1}
+                  isHot={true}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg text-center max-w-4xl mx-auto">
+              <p className="text-gray-600">No hot weapons available yet. Start voting to see popular weapons!</p>
+            </div>
+          )}
+        </div>
 
         {/* Community Stats */}
         <div className="mb-12">

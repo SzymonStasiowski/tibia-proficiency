@@ -138,10 +138,73 @@ export function useWeaponCategories(initialData?: any[]) {
   })
 }
 
-export function useWeaponsByCategory(categoryId: string, initialData?: Weapon[]) {
+export function useWeaponsByCategory(categoryId: string, initialData?: any[]) {
   // Convert category ID back to weapon type
   const weaponType = categoryId === 'all' ? undefined : 
     categoryId.replace(/-/g, ' ')
   
-  return useWeapons(weaponType, initialData)
+  return useQuery({
+    queryKey: weaponKeys.list(weaponType || 'all'),
+    queryFn: async () => {
+      let query = supabase.from('weapons').select(`
+        *,
+        votes (id)
+      `)
+      
+      if (weaponType && weaponType !== 'all') {
+        query = query.ilike('weapon_type', weaponType)
+      }
+      
+      const { data, error } = await query.order('name')
+      
+      if (error) throw error
+      
+      // Calculate total votes for each weapon from the votes table
+      const weaponsWithVotes = (data || []).map(weapon => {
+        const totalVotes = (weapon.votes as any[])?.length || 0
+        return {
+          ...weapon,
+          totalVotes
+        }
+      })
+      
+      return weaponsWithVotes
+    },
+    initialData: initialData,
+  })
+}
+
+export function useHotWeapons(limit: number = 10, initialData?: any[]) {
+  return useQuery({
+    queryKey: [...weaponKeys.all, 'hot', limit],
+    queryFn: async () => {
+      // Get all weapons with their vote counts from the votes table
+      const { data, error } = await supabase
+        .from('weapons')
+        .select(`
+          *,
+          votes (id)
+        `)
+        .order('name')
+      
+      if (error) throw error
+      
+      // Calculate total votes for each weapon and sort by vote count
+      const weaponsWithVotes = (data || []).map(weapon => {
+        const totalVotes = (weapon.votes as any[])?.length || 0
+        return {
+          ...weapon,
+          totalVotes
+        }
+      })
+      
+      // Sort by vote count (descending) and take the top N
+      const hotWeapons = weaponsWithVotes
+        .sort((a, b) => b.totalVotes - a.totalVotes)
+        .slice(0, limit)
+      
+      return hotWeapons
+    },
+    initialData: initialData,
+  })
 }

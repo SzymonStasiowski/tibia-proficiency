@@ -36,6 +36,7 @@ interface VotingResultsProps {
   votes: any[]
   isVisible?: boolean
   onEditVote?: () => void
+  hasUserVoted?: boolean
 }
 
 interface PerkWithPercentage {
@@ -64,7 +65,7 @@ const COLORS = [
   '#6B7280'  // Gray
 ]
 
-export default function VotingResults({ perks, votes, isVisible = true, onEditVote }: VotingResultsProps) {
+export default function VotingResults({ perks, votes, isVisible = true, onEditVote, hasUserVoted = false }: VotingResultsProps) {
   const resultsRef = useRef<HTMLDivElement>(null)
   const [activeSlot, setActiveSlot] = useState(0)
 
@@ -202,7 +203,7 @@ export default function VotingResults({ perks, votes, isVisible = true, onEditVo
               onClick={onEditVote}
               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium w-full sm:w-auto"
             >
-              ✏️ Edit Vote
+              {hasUserVoted ? '✏️ Edit Vote' : '🗳️ Submit Your Vote'}
             </button>
           )}
         </div>

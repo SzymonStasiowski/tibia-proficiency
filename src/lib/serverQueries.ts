@@ -101,10 +101,10 @@ export async function getWeaponsByCategory(categoryId: string) {
     
 
     
-    // Get weapons with their perks to calculate vote counts
+    // Get weapons with their vote counts from the votes table
     let query = supabaseServer.from('weapons').select(`
       *,
-      perks (vote_count)
+      votes (id)
     `)
     
     if (weaponType && weaponType !== 'all') {
@@ -115,9 +115,9 @@ export async function getWeaponsByCategory(categoryId: string) {
     
     if (error) throw error
     
-    // Calculate total votes for each weapon and add it to the weapon object
+    // Calculate total votes for each weapon from the votes table
     const weaponsWithVotes = (data || []).map(weapon => {
-      const totalVotes = (weapon.perks as any[])?.reduce((sum, perk) => sum + (perk.vote_count || 0), 0) || 0
+      const totalVotes = (weapon.votes as any[])?.length || 0
       return {
         ...weapon,
         totalVotes
@@ -184,6 +184,40 @@ export async function getAllWeapons() {
     return data || []
   } catch (error) {
     console.error('Error fetching all weapons:', error)
+    return []
+  }
+}
+
+export async function getHotWeapons(limit: number = 10) {
+  try {
+    // Get all weapons with their vote counts from the votes table
+    const { data, error } = await supabaseServer
+      .from('weapons')
+      .select(`
+        *,
+        votes (id)
+      `)
+      .order('name')
+    
+    if (error) throw error
+    
+    // Calculate total votes for each weapon and sort by vote count
+    const weaponsWithVotes = (data || []).map(weapon => {
+      const totalVotes = (weapon.votes as any[])?.length || 0
+      return {
+        ...weapon,
+        totalVotes
+      }
+    })
+    
+    // Sort by vote count (descending) and take the top N
+    const hotWeapons = weaponsWithVotes
+      .sort((a, b) => b.totalVotes - a.totalVotes)
+      .slice(0, limit)
+    
+    return hotWeapons
+  } catch (error) {
+    console.error('Error fetching hot weapons:', error)
     return []
   }
 }

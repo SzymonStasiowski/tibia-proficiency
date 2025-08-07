@@ -175,13 +175,26 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
           </div>
         ) : (weaponsData && weaponsData.length > 0) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {weaponsData.map((weapon) => (
-              <Link 
-                key={weapon.id}
-                href={`/weapon/${weaponNameToSlug(weapon.name)}`}
-                className="block"
-              >
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 hover:scale-105">
+            {weaponsData.map((weapon, index) => {
+              // Top 5 weapons get gold borders
+              const isTop5 = index < 5
+              const borderStyle = isTop5 
+                ? 'border-2 border-amber-400 dark:border-amber-500 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30'
+                : 'border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+              
+              return (
+                <Link 
+                  key={weapon.id}
+                  href={`/weapon/${weaponNameToSlug(weapon.name)}`}
+                  className="block"
+                >
+                  <div className={`${borderStyle} rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 relative`}>
+                    {/* Top 5 indicator */}
+                    {isTop5 && (
+                      <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                        🔥 #{index + 1}
+                      </div>
+                    )}
                   <div className="text-center">
                     {weapon.image_url ? (
                       <img 
@@ -214,17 +227,20 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                           {weapon.vocation}
                         </p>
                       )}
-                      <div className="flex items-center justify-center gap-1 text-xs text-blue-600 dark:text-blue-400">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <div className="flex items-center justify-center gap-1 text-xs">
+                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
-                        <span>{weapon.totalVotes || 0} votes</span>
+                        <span className={isTop5 ? 'text-amber-700 dark:text-amber-300 font-semibold' : 'text-blue-600 dark:text-blue-400'}>
+                          {weapon.totalVotes || 0} votes
+                        </span>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         ) : (
           <div className="text-center py-12">
