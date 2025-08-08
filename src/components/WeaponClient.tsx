@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser, useWeaponBuilds, useUserBuildVotes, useVoteForBuild, useRemoveVoteFromBuild, useCreateBuild, SITUATION_TAGS } from '@/hooks'
 import { useSubmitCreatorVote } from '@/hooks/useCreators'
@@ -28,6 +28,7 @@ export default function WeaponClient({
   creatorToken 
 }: WeaponClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const weaponName = slugToWeaponName(weaponSlug)
   
   const { data: weapon, isLoading: weaponLoading, error: weaponError } = useWeaponByName(weaponName, initialWeapon)
@@ -47,7 +48,9 @@ export default function WeaponClient({
   
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
 
-  const [mode, setMode] = useState<'perks' | 'builds'>('perks') // Toggle between perk voting and builds
+  // Check URL parameter for initial tab state
+  const initialTab = searchParams.get('tab')
+  const [mode, setMode] = useState<'perks' | 'builds'>(initialTab === 'builds' ? 'builds' : 'perks')
   const [showCreateBuild, setShowCreateBuild] = useState(false)
   const [buildForm, setBuildForm] = useState({
     name: '',
@@ -349,7 +352,13 @@ export default function WeaponClient({
               
               <div className="flex bg-gray-700 rounded-lg p-1">
                 <button
-                  onClick={() => setMode('perks')}
+                  onClick={() => {
+                    setMode('perks')
+                    // Update URL without reloading
+                    const url = new URL(window.location.href)
+                    url.searchParams.delete('tab')
+                    router.replace(url.pathname + url.search, { scroll: false })
+                  }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                     mode === 'perks'
                       ? 'bg-blue-600 text-white shadow-sm'
@@ -359,7 +368,13 @@ export default function WeaponClient({
                   🎲 Individual Perks
                 </button>
                 <button
-                  onClick={() => setMode('builds')}
+                  onClick={() => {
+                    setMode('builds')
+                    // Update URL without reloading
+                    const url = new URL(window.location.href)
+                    url.searchParams.set('tab', 'builds')
+                    router.replace(url.pathname + url.search, { scroll: false })
+                  }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                     mode === 'builds'
                       ? 'bg-blue-600 text-white shadow-sm'

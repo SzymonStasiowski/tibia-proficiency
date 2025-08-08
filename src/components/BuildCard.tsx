@@ -1,7 +1,10 @@
 'use client'
 
-
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import BuildPerkDisplay from './BuildPerkDisplay'
+import SmartTooltip from './SmartTooltip'
+import { weaponNameToSlug } from '@/lib/utils'
 import type { PopularBuild, Build } from '@/hooks/useBuilds'
 
 interface BuildCardProps {
@@ -28,6 +31,8 @@ export default function BuildCard({
   hideVoting = false,
   weaponData
 }: BuildCardProps) {
+  const router = useRouter()
+  const [isWeaponHovered, setIsWeaponHovered] = useState(false)
 
   const handleVote = () => {
     if (onVote) {
@@ -38,6 +43,11 @@ export default function BuildCard({
   // Get weapon info from either build (PopularBuild) or weaponData prop
   const weaponName = (build as PopularBuild).weapon_name || weaponData?.name || 'Unknown Weapon'
   const weaponImageUrl = (build as PopularBuild).weapon_image_url || weaponData?.image_url
+
+  const handleWeaponClick = () => {
+    const weaponSlug = weaponNameToSlug(weaponName)
+    router.push(`/weapon/${weaponSlug}?tab=builds`)
+  }
 
   return (
     <div className={`bg-gray-800 rounded-lg border relative ${showRank ? 'border-yellow-500 shadow-lg shadow-yellow-500/20' : 'border-gray-700'}`}>
@@ -54,17 +64,34 @@ export default function BuildCard({
         <div className="flex items-start gap-3 mb-4">
           {/* Weapon Image */}
           <div className="flex-shrink-0">
-            {weaponImageUrl ? (
-              <img
-                src={weaponImageUrl}
-                alt={weaponName}
-                className="w-12 h-12 object-contain bg-gray-700 rounded-lg p-1"
-              />
-            ) : (
-              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center text-lg">
-                ⚔️
+            <SmartTooltip
+              content={
+                <div className="text-center">
+                  <div className="font-semibold">{weaponName}</div>
+                  <div className="text-xs text-gray-300 mt-1">Click to view builds</div>
+                </div>
+              }
+              isVisible={isWeaponHovered}
+            >
+              <div
+                className="cursor-pointer transition-transform hover:scale-105"
+                onMouseEnter={() => setIsWeaponHovered(true)}
+                onMouseLeave={() => setIsWeaponHovered(false)}
+                onClick={handleWeaponClick}
+              >
+                {weaponImageUrl ? (
+                  <img
+                    src={weaponImageUrl}
+                    alt={weaponName}
+                    className="w-12 h-12 object-contain bg-gray-700 rounded-lg p-1 hover:bg-gray-600 transition-colors"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-lg transition-colors">
+                    ⚔️
+                  </div>
+                )}
               </div>
-            )}
+            </SmartTooltip>
           </div>
           
           {/* Build Info */}
@@ -150,17 +177,34 @@ export default function BuildCard({
           <div className="flex gap-4 w-fit">
             {/* Weapon Image */}
             <div className="flex-shrink-0">
-              {weaponImageUrl ? (
-                <img
-                  src={weaponImageUrl}
-                  alt={weaponName}
-                  className="w-16 h-16 object-contain bg-gray-700 rounded-lg p-2"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-2xl">
-                  ⚔️
+              <SmartTooltip
+                content={
+                  <div className="text-center">
+                    <div className="font-semibold">{weaponName}</div>
+                    <div className="text-xs text-gray-300 mt-1">Click to view builds</div>
+                  </div>
+                }
+                isVisible={isWeaponHovered}
+              >
+                <div
+                  className="cursor-pointer transition-transform hover:scale-105"
+                  onMouseEnter={() => setIsWeaponHovered(true)}
+                  onMouseLeave={() => setIsWeaponHovered(false)}
+                  onClick={handleWeaponClick}
+                >
+                  {weaponImageUrl ? (
+                    <img
+                      src={weaponImageUrl}
+                      alt={weaponName}
+                      className="w-16 h-16 object-contain bg-gray-700 rounded-lg p-2 hover:bg-gray-600 transition-colors"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-2xl transition-colors">
+                      ⚔️
+                    </div>
+                  )}
                 </div>
-              )}
+              </SmartTooltip>
             </div>
             
             <div className="w-fit max-w-xs">
