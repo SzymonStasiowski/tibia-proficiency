@@ -155,7 +155,7 @@ export default function CreatorProfileClient({
                 >
                   {creator.avatar_url ? (
                     <Image
-                      src={creator.avatar_url}
+                      src={`/api/img?url=${encodeURIComponent(creator.avatar_url)}`}
                       alt={creator.channel_name}
                       width={128}
                       height={128}
@@ -172,7 +172,7 @@ export default function CreatorProfileClient({
                 <>
                   {creator.avatar_url ? (
                     <Image
-                      src={creator.avatar_url}
+                      src={`/api/img?url=${encodeURIComponent(creator.avatar_url)}`}
                       alt={creator.channel_name}
                       width={128}
                       height={128}
@@ -258,7 +258,7 @@ export default function CreatorProfileClient({
                   <div className="flex items-center justify-center">
                     {vote.weapons.image_url ? (
                       <Image
-                        src={vote.weapons.image_url}
+                        src={`/api/img?url=${encodeURIComponent(vote.weapons.image_url)}`}
                         alt={vote.weapons.name}
                         width={48}
                         height={48}

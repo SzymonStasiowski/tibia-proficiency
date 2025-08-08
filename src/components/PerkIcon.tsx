@@ -51,7 +51,7 @@ export default function PerkIcon({
     <div className={`relative ${sizeClasses} ${className}`}>
       {!imageError ? (
         <Image
-          src={iconUrl}
+          src={`/api/img?url=${encodeURIComponent(iconUrl)}`}
           alt={altText}
           fill
           sizes="100%"
@@ -72,7 +72,7 @@ export default function PerkIcon({
       {overlayIcon && !overlayError && (
         <div className="absolute top-0 right-0 w-4 h-4 bg-gray-800 border border-gray-500 rounded-sm overflow-hidden">
           <Image
-            src={overlayIcon}
+            src={`/api/img?url=${encodeURIComponent(overlayIcon)}`}
             alt="Type indicator"
             width={16}
             height={16}

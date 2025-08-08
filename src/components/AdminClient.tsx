@@ -267,7 +267,7 @@ export default function AdminClient() {
                       <div className="flex items-center space-x-3">
                         {creator.avatar_url && (
                           <Image
-                            src={creator.avatar_url}
+                            src={`/api/img?url=${encodeURIComponent(creator.avatar_url)}`}
                             alt={creator.channel_name}
                             width={40}
                             height={40}

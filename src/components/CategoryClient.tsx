@@ -219,7 +219,7 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                   <div className="text-center">
                     {weapon.image_url ? (
                       <Image 
-                        src={weapon.image_url as string} 
+                        src={`/api/img?url=${encodeURIComponent(weapon.image_url as string)}`} 
                         alt={weapon.name || 'Weapon'}
                         width={64}
                         height={64}

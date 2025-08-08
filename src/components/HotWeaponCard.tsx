@@ -73,7 +73,7 @@ export default function HotWeaponCard({ weapon, rank, isHot = true }: HotWeaponC
         <div className="text-center">
           {weapon.image_url ? (
             <Image 
-              src={weapon.image_url} 
+              src={`/api/img?url=${encodeURIComponent(weapon.image_url)}`} 
               alt={weapon.name}
               width={48}
               height={48}

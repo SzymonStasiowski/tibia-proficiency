@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            value: 'no-referrer',
           },
           {
             key: 'X-XSS-Protection',
@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: https: blob:",
+              "img-src * data: blob:",
               'upgrade-insecure-requests',
               "connect-src 'self' https://*.supabase.co",
               "frame-ancestors 'none'",

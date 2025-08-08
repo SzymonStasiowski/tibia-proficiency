@@ -124,7 +124,7 @@ export default function BuildCard({
               >
                 {weaponImageUrl ? (
                   <Image
-                    src={weaponImageUrl}
+                    src={`/api/img?url=${encodeURIComponent(weaponImageUrl)}`}
                     alt={weaponName}
                     width={48}
                     height={48}
@@ -231,7 +231,7 @@ export default function BuildCard({
                 >
                   {weaponImageUrl ? (
                     <Image
-                      src={weaponImageUrl}
+                      src={`/api/img?url=${encodeURIComponent(weaponImageUrl)}`}
                       alt={weaponName}
                       width={64}
                       height={64}

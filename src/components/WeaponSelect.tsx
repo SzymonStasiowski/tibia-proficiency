@@ -151,7 +151,7 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
                   <div className="flex items-center gap-3">
                     {weapon.image_url ? (
                       <Image 
-                        src={weapon.image_url} 
+                        src={`/api/img?url=${encodeURIComponent(weapon.image_url)}`} 
                         alt={weapon.name}
                         width={32}
                         height={32}
