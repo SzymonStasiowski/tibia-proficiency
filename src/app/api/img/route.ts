@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         'Origin': 'https://tibia.fandom.com',
         'User-Agent': 'Mozilla/5.0 (compatible; TibiaVoteBot/1.0; +https://tibiavote.vercel.app)'
       },
-      cache: 'force-cache',
+      cache: 'no-store',
       // Next.js runtime can stream the body directly
       // @ts-expect-error: duplex is not typed in lib.dom for fetch yet
       duplex: 'half',
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=604800',
       },
     })
 

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import { weaponNameToSlug } from '@/lib/utils'
 
 interface HotWeapon {
@@ -71,18 +72,22 @@ export default function HotWeaponCard({ weapon, rank, isHot = true }: HotWeaponC
         )}
         
         <div className="text-center">
-          {weapon.image_url ? (
-            <Image 
-              src={`/api/img?url=${encodeURIComponent(weapon.image_url)}`} 
-              alt={weapon.name}
-              width={48}
-              height={48}
-              className="w-12 h-12 mx-auto mb-3 object-contain"
-              unoptimized
-            />
-          ) : (
-            <div className="text-3xl mb-3">{style.icon}</div>
-          )}
+          {(() => {
+            const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weapon.image_url || undefined })
+            const url = asDisplayUrl(raw)
+            return url ? (
+              <Image 
+                src={url} 
+                alt={weapon.name}
+                width={48}
+                height={48}
+                className="w-12 h-12 mx-auto mb-3 object-contain"
+                unoptimized
+              />
+            ) : (
+              <div className="text-3xl mb-3">{style.icon}</div>
+            )
+          })()}
           
           <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-1 line-clamp-2">
             {weapon.name}

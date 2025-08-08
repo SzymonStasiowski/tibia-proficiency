@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import Image from 'next/image'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import { useAllWeapons } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 
@@ -149,18 +150,22 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
                   `}
                 >
                   <div className="flex items-center gap-3">
-                    {weapon.image_url ? (
-                      <Image 
-                        src={`/api/img?url=${encodeURIComponent(weapon.image_url)}`} 
-                        alt={weapon.name}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 object-contain flex-shrink-0"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-8 h-8 flex items-center justify-center text-xl flex-shrink-0">⚔️</div>
-                    )}
+                    {(() => {
+                      const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weapon.image_url || undefined })
+                      const url = asDisplayUrl(raw)
+                      return url ? (
+                        <Image 
+                          src={url} 
+                          alt={weapon.name}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 object-contain flex-shrink-0"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-8 h-8 flex items-center justify-center text-xl flex-shrink-0">⚔️</div>
+                      )
+                    })()}
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
                         {weapon.name}

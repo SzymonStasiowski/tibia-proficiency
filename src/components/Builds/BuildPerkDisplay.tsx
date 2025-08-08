@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import PerkIcon from '@/components/PerkIcon'
 import SmartTooltip from '@/components/SmartTooltip'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 
 interface DatabasePerk {
   id: string
@@ -10,6 +11,8 @@ interface DatabasePerk {
   description: string
   main_icon_url: string
   type_icon_url?: string
+  main_media?: { id: string; storage_path: string } | null
+  type_media?: { id: string; storage_path: string } | null
 }
 
 interface BuildPerkDisplayProps {
@@ -40,9 +43,9 @@ function SmallPerkSlot({ perk }: SmallPerkSlotProps) {
         onMouseLeave={() => setShowTooltip(false)}
       >
         <PerkIcon
-          iconUrl={perk.main_icon_url}
+          iconUrl={asDisplayUrl(getImageFromRecord({ media: perk.main_media || undefined, legacyUrl: perk.main_icon_url })) || ''}
           altText={perk.name}
-          overlayIcon={perk.type_icon_url}
+          overlayIcon={asDisplayUrl(getImageFromRecord({ media: perk.type_media || undefined, legacyUrl: perk.type_icon_url || null })) || undefined}
           size="medium"
         />
       </div>

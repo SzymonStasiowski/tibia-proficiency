@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { asDisplayUrl } from '@/lib/images'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks'
 import { generateCreatorToken, channelNameToSlug } from '@/lib/utils'
@@ -267,7 +268,7 @@ export default function AdminClient() {
                       <div className="flex items-center space-x-3">
                         {creator.avatar_url && (
                           <Image
-                            src={`/api/img?url=${encodeURIComponent(creator.avatar_url)}`}
+                            src={asDisplayUrl(creator.avatar_url)!}
                             alt={creator.channel_name}
                             width={40}
                             height={40}

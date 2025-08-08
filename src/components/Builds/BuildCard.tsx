@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import BuildPerkDisplay from '@/components/Builds/BuildPerkDisplay'
 import Image from 'next/image'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import SmartTooltip from '@/components/SmartTooltip'
 import { weaponNameToSlug } from '@/lib/utils'
 import type { PopularBuild, Build } from '@/hooks/useBuilds'
@@ -122,20 +123,24 @@ export default function BuildCard({
                 onMouseLeave={() => setIsWeaponHovered(false)}
                 onClick={handleWeaponClick}
               >
-                {weaponImageUrl ? (
-                  <Image
-                    src={`/api/img?url=${encodeURIComponent(weaponImageUrl)}`}
-                    alt={weaponName}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 object-contain bg-gray-700 rounded-lg p-1 hover:bg-gray-600 transition-colors"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-lg transition-colors">
-                    ⚔️
-                  </div>
-                )}
+                {(() => {
+                  const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weaponImageUrl })
+                  const url = asDisplayUrl(raw)
+                  return url ? (
+                    <Image
+                      src={url}
+                      alt={weaponName}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 object-contain bg-gray-700 rounded-lg p-1 hover:bg-gray-600 transition-colors"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-lg transition-colors">
+                      ⚔️
+                    </div>
+                  )
+                })()}
               </div>
             </SmartTooltip>
           </div>
@@ -229,20 +234,24 @@ export default function BuildCard({
                   onMouseLeave={() => setIsWeaponHovered(false)}
                   onClick={handleWeaponClick}
                 >
-                  {weaponImageUrl ? (
-                    <Image
-                      src={`/api/img?url=${encodeURIComponent(weaponImageUrl)}`}
-                      alt={weaponName}
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 object-contain bg-gray-700 rounded-lg p-2 hover:bg-gray-600 transition-colors"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-2xl transition-colors">
-                      ⚔️
-                    </div>
-                  )}
+                  {(() => {
+                    const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weaponImageUrl })
+                    const url = asDisplayUrl(raw)
+                    return url ? (
+                      <Image
+                        src={url}
+                        alt={weaponName}
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 object-contain bg-gray-700 rounded-lg p-2 hover:bg-gray-600 transition-colors"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-2xl transition-colors">
+                        ⚔️
+                      </div>
+                    )
+                  })()}
                 </div>
               </SmartTooltip>
             </div>

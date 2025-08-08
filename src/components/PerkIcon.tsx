@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Image from 'next/image'
+import { getImageFromRecord } from '@/lib/images'
 
 interface PerkIconProps {
   iconUrl: string
@@ -51,7 +52,7 @@ export default function PerkIcon({
     <div className={`relative ${sizeClasses} ${className}`}>
       {!imageError ? (
         <Image
-          src={`/api/img?url=${encodeURIComponent(iconUrl)}`}
+          src={getImageFromRecord({ media: undefined as any, legacyUrl: iconUrl }) || ''}
           alt={altText}
           fill
           sizes="100%"
@@ -72,7 +73,7 @@ export default function PerkIcon({
       {overlayIcon && !overlayError && (
         <div className="absolute top-0 right-0 w-4 h-4 bg-gray-800 border border-gray-500 rounded-sm overflow-hidden">
           <Image
-            src={`/api/img?url=${encodeURIComponent(overlayIcon)}`}
+            src={getImageFromRecord({ media: undefined as any, legacyUrl: overlayIcon }) || ''}
             alt="Type indicator"
             width={16}
             height={16}

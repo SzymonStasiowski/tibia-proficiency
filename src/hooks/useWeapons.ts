@@ -21,11 +21,13 @@ export const weaponKeys = {
 }
 
 // Hooks
-export function useWeapons(weaponType?: string, initialData?: Weapon[]) {
+type MediaJoin = { media?: { id: string; storage_path: string } | null }
+
+export function useWeapons(weaponType?: string, initialData?: (Weapon & MediaJoin)[]) {
   return useQuery({
     queryKey: weaponKeys.list(weaponType || 'all'),
-    queryFn: async (): Promise<Weapon[]> => {
-      let query = supabase.from('weapons').select('*')
+    queryFn: async (): Promise<(Weapon & MediaJoin)[]> => {
+      let query = supabase.from('weapons').select(`*, media:media(*)`)
       
       if (weaponType && weaponType !== 'all') {
         query = query.eq('weapon_type', weaponType)
@@ -35,9 +37,9 @@ export function useWeapons(weaponType?: string, initialData?: Weapon[]) {
       
       if (error) throw error
       
-      return data || []
+      return (data as (Weapon & MediaJoin)[]) || []
     },
-    initialData: initialData,
+    initialData,
   })
 }
 
@@ -45,15 +47,15 @@ export function useWeapons(weaponType?: string, initialData?: Weapon[]) {
 export function useAllWeapons() {
   return useQuery({
     queryKey: weaponKeys.lists(),
-    queryFn: async (): Promise<Weapon[]> => {
+    queryFn: async (): Promise<(Weapon & MediaJoin)[]> => {
       const { data, error } = await supabase
         .from('weapons')
-        .select('*')
+        .select(`*, media:media(*)`)
         .order('name')
       
       if (error) throw error
       
-      return data || []
+      return (data as (Weapon & MediaJoin)[]) || []
     },
   })
 }
@@ -61,13 +63,14 @@ export function useAllWeapons() {
 export function useWeapon(id: string) {
   return useQuery({
     queryKey: weaponKeys.detail(id),
-    queryFn: async (): Promise<WeaponWithPerks | null> => {
+    queryFn: async (): Promise<(WeaponWithPerks & MediaJoin) | null> => {
       // Get weapon with its perks
       const { data: weapon, error: weaponError } = await supabase
         .from('weapons')
         .select(`
           *,
-          perks (*)
+          media:media(*),
+          perks (*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*))
         `)
         .eq('id', id)
         .single()
@@ -77,7 +80,7 @@ export function useWeapon(id: string) {
         throw weaponError
       }
       
-      return weapon as WeaponWithPerks
+      return weapon as unknown as WeaponWithPerks & MediaJoin
     },
     enabled: !!id,
   })
@@ -86,13 +89,14 @@ export function useWeapon(id: string) {
 export function useWeaponByName(name: string, initialData?: WeaponWithPerks | null) {
   return useQuery({
     queryKey: [...weaponKeys.details(), 'by-name', name],
-    queryFn: async (): Promise<WeaponWithPerks | null> => {
+    queryFn: async (): Promise<(WeaponWithPerks & MediaJoin) | null> => {
       // Get weapon with its perks by name
       const { data: weapon, error: weaponError } = await supabase
         .from('weapons')
         .select(`
           *,
-          perks (*)
+          media:media(*),
+          perks (*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*))
         `)
         .ilike('name', name)
         .single()
@@ -102,7 +106,7 @@ export function useWeaponByName(name: string, initialData?: WeaponWithPerks | nu
         throw weaponError
       }
       
-      return weapon as WeaponWithPerks
+      return weapon as unknown as WeaponWithPerks & MediaJoin
     },
     enabled: !!name,
     initialData: initialData,
@@ -145,10 +149,11 @@ export function useWeaponsByCategory(categoryId: string, initialData?: Weapon[])
   
   return useQuery({
     queryKey: weaponKeys.list(weaponType || 'all'),
-    queryFn: async (): Promise<(Weapon & { votes: { id: string }[]; totalVotes: number })[]> => {
+    queryFn: async (): Promise<((Weapon & MediaJoin) & { votes: { id: string }[]; totalVotes: number })[]> => {
       let query = supabase.from('weapons').select(`
         *,
-        votes (id)
+        votes (id),
+        media:media(*)
       `)
       
       if (weaponType && weaponType !== 'all') {
@@ -163,7 +168,7 @@ export function useWeaponsByCategory(categoryId: string, initialData?: Weapon[])
       const weaponsWithVotes = (data || []).map((weapon) => {
         const votesArray = (weapon.votes as { id: string }[]) || []
         const totalVotes = votesArray.length
-        return { ...weapon, votes: votesArray, totalVotes }
+        return { ...(weapon as Weapon & MediaJoin), votes: votesArray, totalVotes }
       })
       
       return weaponsWithVotes
@@ -175,13 +180,14 @@ export function useWeaponsByCategory(categoryId: string, initialData?: Weapon[])
 export function useHotWeapons(limit: number = 10, initialData?: Weapon[]) {
   return useQuery({
     queryKey: [...weaponKeys.all, 'hot', limit],
-    queryFn: async (): Promise<(Weapon & { votes: { id: string }[]; totalVotes: number })[]> => {
+    queryFn: async (): Promise<((Weapon & MediaJoin) & { votes: { id: string }[]; totalVotes: number })[]> => {
       // Get all weapons with their vote counts from the votes table
       const { data, error } = await supabase
         .from('weapons')
         .select(`
           *,
-          votes (id)
+          votes (id),
+          media:media(*)
         `)
         .order('name')
       
@@ -191,7 +197,7 @@ export function useHotWeapons(limit: number = 10, initialData?: Weapon[]) {
       const weaponsWithVotes = (data || []).map((weapon) => {
         const votesArray = (weapon.votes as { id: string }[]) || []
         const totalVotes = votesArray.length
-        return { ...weapon, votes: votesArray, totalVotes }
+        return { ...(weapon as Weapon & MediaJoin), votes: votesArray, totalVotes }
       })
       
       // Sort by vote count (descending) and take the top N

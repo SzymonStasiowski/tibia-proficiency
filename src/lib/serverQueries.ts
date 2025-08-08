@@ -51,7 +51,8 @@ export async function getWeaponsByCategory(categoryId: string) {
     // Get weapons with their vote counts from the votes table
     let query = supabaseServer.from('weapons').select(`
       *,
-      votes (id)
+      votes (id),
+      media:media(*)
     `)
     
     if (weaponType && weaponType !== 'all') {
@@ -125,7 +126,7 @@ export async function getAllWeapons() {
   try {
     const { data, error } = await supabaseServer
       .from('weapons')
-      .select('*')
+      .select(`*, media:media(*)`)
       .order('name')
     
     if (error) throw error
@@ -144,7 +145,8 @@ export async function getHotWeapons(limit: number = 10) {
       .from('weapons')
       .select(`
         *,
-        votes (id)
+        votes (id),
+        media:media(*)
       `)
       .order('name')
     

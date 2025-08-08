@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import Link from 'next/link'
 import { Creator, CreatorStats } from '@/hooks/useCreators'
 import { weaponNameToSlug } from '@/lib/utils'
@@ -155,7 +156,7 @@ export default function CreatorProfileClient({
                 >
                   {creator.avatar_url ? (
                     <Image
-                      src={`/api/img?url=${encodeURIComponent(creator.avatar_url)}`}
+                      src={asDisplayUrl(creator.avatar_url)!}
                       alt={creator.channel_name}
                       width={128}
                       height={128}
@@ -172,7 +173,7 @@ export default function CreatorProfileClient({
                 <>
                   {creator.avatar_url ? (
                     <Image
-                      src={`/api/img?url=${encodeURIComponent(creator.avatar_url)}`}
+                      src={asDisplayUrl(creator.avatar_url)!}
                       alt={creator.channel_name}
                       width={128}
                       height={128}
@@ -256,18 +257,22 @@ export default function CreatorProfileClient({
                 >
                   {/* Weapon Image */}
                   <div className="flex items-center justify-center">
-                    {vote.weapons.image_url ? (
-                      <Image
-                        src={`/api/img?url=${encodeURIComponent(vote.weapons.image_url)}`}
-                        alt={vote.weapons.name}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 object-contain"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="text-2xl">⚔️</div>
-                    )}
+                    {(() => {
+                      const raw = getImageFromRecord({ media: undefined as any, legacyUrl: vote.weapons.image_url })
+                      const url = asDisplayUrl(raw)
+                      return url ? (
+                        <Image
+                          src={url}
+                          alt={vote.weapons.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 object-contain"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="text-2xl">⚔️</div>
+                      )
+                    })()}
                   </div>
                   
                   {/* Creator Badge */}

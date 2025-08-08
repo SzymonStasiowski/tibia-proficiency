@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import Image from 'next/image'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import { useState, useMemo } from 'react'
 import { useWeaponsByCategory, useWeaponCategories } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
@@ -217,18 +218,22 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                       </div>
                     )}
                   <div className="text-center">
-                    {weapon.image_url ? (
-                      <Image 
-                        src={`/api/img?url=${encodeURIComponent(weapon.image_url as string)}`} 
-                        alt={weapon.name || 'Weapon'}
-                        width={64}
-                        height={64}
-                        className="w-16 h-16 mx-auto mb-4 object-contain"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="text-4xl mb-4">⚔️</div>
-                    )}
+                    {(() => {
+                      const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weapon.image_url || undefined })
+                      const url = asDisplayUrl(raw)
+                      return url ? (
+                        <Image
+                          src={url}
+                          alt={weapon.name || 'Weapon'}
+                          width={64}
+                          height={64}
+                          className="w-16 h-16 mx-auto mb-4 object-contain"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="text-4xl mb-4">⚔️</div>
+                      )
+                    })()}
                     <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">
                       {weapon.name}
                     </h3>
