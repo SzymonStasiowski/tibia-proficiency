@@ -171,22 +171,20 @@ export default function BuildCard({
               {!hideVoting && (
                 <Button
                   onClick={handleVote}
+                  size='icon'
                   disabled={votingBuildId === build.id}
-                  className={`absolute -top-0.5 -right-2 w-6 h-6 p-0 rounded-full text-sm font-bold ${
+                  className={`absolute -top-0.5 -right-4 !w-5 !h-5 !p-2 text-[12px] font-bold leading-none flex items-center justify-center ${
                     userBuildVotes.includes(build.id)
                       ? 'bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10'
-                      : ''
+                      : 'bg-green-600 hover:bg-green-700 text-white'
                   }`}
-                  variant={userBuildVotes.includes(build.id) ? 'ghost' : 'default'}
                   title={
-                    votingBuildId === build.id
-                      ? 'Processing...'
-                      : userBuildVotes.includes(build.id)
+                    userBuildVotes.includes(build.id)
                       ? 'Click to remove vote'
                       : 'Vote for this build'
                   }
                 >
-                  {votingBuildId === build.id ? '⏳' : userBuildVotes.includes(build.id) ? '✓' : '+'}
+                  {userBuildVotes.includes(build.id) ? '✓' : '+1'}
                 </Button>
               )}
             </div>
@@ -295,21 +293,18 @@ export default function BuildCard({
                 <Button
                   onClick={handleVote}
                   disabled={votingBuildId === build.id}
-                  className={`absolute -top-1 -right-4 w-7 h-7 p-0 rounded-full text-sm font-bold ${
+                  className={`absolute -top-1 -right-4 !w-5 !h-5 !p-2 text-[12px] font-bold leading-none flex items-center justify-center ${
                     userBuildVotes.includes(build.id)
                       ? 'bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10'
-                      : ''
+                      : 'bg-green-600 hover:bg-green-700 text-white'
                   }`}
-                  variant={userBuildVotes.includes(build.id) ? 'ghost' : 'default'}
                   title={
-                    votingBuildId === build.id
-                      ? 'Processing...'
-                      : userBuildVotes.includes(build.id)
+                    userBuildVotes.includes(build.id)
                       ? 'Click to remove vote'
                       : 'Vote for this build'
                   }
                 >
-                  {votingBuildId === build.id ? '⏳' : userBuildVotes.includes(build.id) ? '✓' : '+'}
+                  {userBuildVotes.includes(build.id) ? '✓' : '+1'}
                 </Button>
               )}
             </div>

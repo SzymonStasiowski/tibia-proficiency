@@ -121,7 +121,7 @@ export default function HomeClient({ initialCategories, initialHotWeapons, initi
 
         {/* Hot Weapons Section */}
         <div className="mb-12">
-          <div className="mb-6">
+          <div className="mb-6 flex items-center justify-center text-center">
             <Toolbar>
               <ToolbarSection>
                 <div>
@@ -159,16 +159,6 @@ export default function HomeClient({ initialCategories, initialHotWeapons, initi
 
         {/* Most Voted Builds */}
         <div className="mb-12" id="popular-builds">
-          <div className="mb-6">
-            <Toolbar>
-              <ToolbarSection>
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold">🏆 Most Voted Builds</h2>
-                  <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Top community builds across all weapons</p>
-                </div>
-              </ToolbarSection>
-            </Toolbar>
-          </div>
           {isLoadingPopularBuilds ? (
             <Card className="p-4 md:p-8 text-center max-w-4xl mx-auto">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
