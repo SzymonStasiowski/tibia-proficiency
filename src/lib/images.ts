@@ -50,6 +50,8 @@ export function asDisplayUrl(url: string | null): string | null {
   if (supaPrefix && url.startsWith(supaPrefix)) {
     return url
   }
+  // If it looks like a Supabase public URL but baseUrl differs (e.g., region alias), allow direct
+  if (url.includes('/storage/v1/object/public/')) return url
   return `/api/img?url=${encodeURIComponent(url)}`
 }
 
