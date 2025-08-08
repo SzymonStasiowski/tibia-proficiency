@@ -2,6 +2,7 @@ import { getWeaponByName, getWeaponPerks, getAllWeapons } from '@/lib/serverQuer
 import { slugToWeaponName, weaponNameToSlug } from '@/lib/utils'
 import WeaponClient from '@/components/WeaponClient'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 interface WeaponPageProps {
   params: Promise<{ weaponSlug: string }>
@@ -23,11 +24,20 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
     console.log('Server-side loaded:', weaponName, 'with', initialPerks.length, 'perks')
 
     return (
-      <WeaponClient 
-        weaponSlug={weaponSlug}
-        initialWeapon={initialWeapon}
-        initialPerks={initialPerks}
-      />
+      <Suspense fallback={
+        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-300">Loading weapon data...</p>
+          </div>
+        </div>
+      }>
+        <WeaponClient 
+          weaponSlug={weaponSlug}
+          initialWeapon={initialWeapon}
+          initialPerks={initialPerks}
+        />
+      </Suspense>
     )
   } catch (error) {
     console.error('Error in WeaponPage:', error)

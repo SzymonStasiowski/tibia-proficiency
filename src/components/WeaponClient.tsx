@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeaponVotesWithUser, useWeaponBuilds, useUserBuildVotes, useVoteForBuild, useRemoveVoteFromBuild, useCreateBuild, SITUATION_TAGS } from '@/hooks'
 import { useSubmitCreatorVote } from '@/hooks/useCreators'
