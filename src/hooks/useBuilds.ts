@@ -310,7 +310,7 @@ export function useVoteForBuild() {
       if (error) throw error
       return data
     },
-    onSuccess: async (data, variables) => {
+    onSuccess: async (_data, variables) => {
       // Get the build to know which weapon to invalidate
       const { data: build } = await supabase
         .from('builds')
@@ -361,7 +361,7 @@ export function useRemoveVoteFromBuild() {
       if (error) throw error
       return { success: true }
     },
-    onSuccess: async (_, variables) => {
+    onSuccess: async (_result, variables) => {
       // Get the build to know which weapon to invalidate
       const { data: build } = await supabase
         .from('builds')

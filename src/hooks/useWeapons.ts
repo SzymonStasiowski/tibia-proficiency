@@ -109,7 +109,7 @@ export function useWeaponByName(name: string, initialData?: WeaponWithPerks | nu
   })
 }
 
-export function useWeaponCategories(initialData?: any[]) {
+export function useWeaponCategories(initialData?: { id: string; name: string; weaponCount: number }[]) {
   return useQuery({
     queryKey: weaponKeys.categories(),
     queryFn: async () => {
@@ -134,7 +134,7 @@ export function useWeaponCategories(initialData?: any[]) {
         weaponCount: count,
       }))
     },
-    initialData: initialData,
+    initialData,
   })
 }
 
@@ -168,7 +168,7 @@ export function useWeaponsByCategory(categoryId: string, initialData?: Weapon[])
       
       return weaponsWithVotes
     },
-    initialData: initialData as any,
+    initialData,
   })
 }
 
@@ -201,6 +201,6 @@ export function useHotWeapons(limit: number = 10, initialData?: Weapon[]) {
       
       return hotWeapons
     },
-    initialData: initialData as any,
+    initialData,
   })
 }

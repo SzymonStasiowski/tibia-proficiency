@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useCreatorByToken } from '@/hooks/useCreators'
 import { weaponNameToSlug } from '@/lib/utils'
 import { useToast } from '@/hooks'
@@ -78,10 +79,13 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 {creator?.avatar_url && (
-                  <img
+                  <Image
                     src={creator?.avatar_url}
-                    alt={creator?.channel_name}
+                    alt={creator?.channel_name || 'Creator avatar'}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full border-2 border-yellow-400"
+                    unoptimized
                   />
                 )}
                 <div>
@@ -89,7 +93,7 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
                     🎮 {creator?.channel_name} - Creator Voting
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Your votes will be featured as "Creator's Choice"
+                    Your votes will be featured as &quot;Creator&apos;s Choice&quot;
                   </p>
                 </div>
               </div>
@@ -120,11 +124,14 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
         {/* Creator Welcome Section */}
         <div className="text-center mb-12">
           <div className="flex justify-center items-center mb-6">
-                            {creator?.avatar_url && (
-              <img
+            {creator?.avatar_url && (
+              <Image
                 src={creator?.avatar_url}
-                alt={creator?.channel_name}
+                alt={creator?.channel_name || 'Creator avatar'}
+                width={96}
+                height={96}
                 className="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg mr-6"
+                unoptimized
               />
             )}
             <div className="text-left">

@@ -55,7 +55,13 @@ export default function MostVotedBuilds({ builds }: MostVotedBuildsProps) {
             <BuildCard
               key={build.id}
               build={build}
-              perks={buildPerksMap[build.id] || []}
+              perks={(buildPerksMap[build.id] || []).map(p => ({
+                id: p.id,
+                name: p.name || 'Perk',
+                description: p.description || '',
+                main_icon_url: p.main_icon_url || '',
+                type_icon_url: p.type_icon_url || undefined,
+              }))}
               showRank={index + 1}
               hideVoting={true}
             />

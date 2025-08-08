@@ -64,9 +64,11 @@ export async function getWeaponsByCategory(categoryId: string) {
     
     // Calculate total votes for each weapon from the votes table
     const weaponsWithVotes = (data || []).map(weapon => {
-      const totalVotes = (weapon.votes as any[])?.length || 0
+      const votesArray = (weapon.votes as { id: string }[]) || []
+      const totalVotes = votesArray.length
       return {
         ...weapon,
+        votes: votesArray,
         totalVotes
       }
     })
@@ -150,9 +152,11 @@ export async function getHotWeapons(limit: number = 10) {
     
     // Calculate total votes for each weapon and sort by vote count
     const weaponsWithVotes = (data || []).map(weapon => {
-      const totalVotes = (weapon.votes as any[])?.length || 0
+      const votesArray = (weapon.votes as { id: string }[]) || []
+      const totalVotes = votesArray.length
       return {
         ...weapon,
+        votes: votesArray,
         totalVotes
       }
     })

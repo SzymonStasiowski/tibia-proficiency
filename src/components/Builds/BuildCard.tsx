@@ -3,13 +3,14 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import BuildPerkDisplay from '@/components/Builds/BuildPerkDisplay'
+import Image from 'next/image'
 import SmartTooltip from '@/components/SmartTooltip'
 import { weaponNameToSlug } from '@/lib/utils'
 import type { PopularBuild, Build } from '@/hooks/useBuilds'
 
 interface BuildCardProps {
   build: PopularBuild | (Build & { weapon_name?: string; weapon_image_url?: string })
-  perks?: any[]
+  perks?: { id: string; name: string; description: string; main_icon_url: string; type_icon_url?: string }[]
   onVote?: (buildId: string) => void
   userBuildVotes?: string[]
   votingBuildId?: string | null
@@ -36,9 +37,9 @@ export default function BuildCard({
   // const [imageError, setImageError] = useState(false)
 
   // Get weapon style based on weapon type - similar to HotWeaponCard
-  const getWeaponFallback = (weaponName: string, weaponType?: string) => {
+  const getWeaponFallback = (_weaponName: string, weaponType?: string) => {
     const lowerType = weaponType?.toLowerCase() || ''
-    const lowerName = weaponName?.toLowerCase() || ''
+    const lowerName = _weaponName?.toLowerCase() || ''
     
     // First check weapon type if available
     if (lowerType.includes('sword') || lowerName.includes('sword')) {
@@ -79,7 +80,7 @@ export default function BuildCard({
   // Get weapon info from either build (PopularBuild) or weaponData prop
   const weaponName = (build as PopularBuild).weapon_name || weaponData?.name || 'Unknown Weapon'
   const weaponImageUrl = (build as PopularBuild).weapon_image_url || weaponData?.image_url
-  const weaponType = (build as any)?.weapon_type || (weaponData as any)?.weapon_type
+  const weaponType = (build as PopularBuild & { weapon_type?: string })?.weapon_type || (weaponData as { weapon_type?: string } | undefined)?.weapon_type
   
   // Get fallback styling
   // const fallbackStyle = getWeaponFallback(weaponName, weaponType)
@@ -120,10 +121,13 @@ export default function BuildCard({
                 onClick={handleWeaponClick}
               >
                 {weaponImageUrl ? (
-                  <img
+                  <Image
                     src={weaponImageUrl}
                     alt={weaponName}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 object-contain bg-gray-700 rounded-lg p-1 hover:bg-gray-600 transition-colors"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-lg transition-colors">
@@ -233,10 +237,13 @@ export default function BuildCard({
                   onClick={handleWeaponClick}
                 >
                   {weaponImageUrl ? (
-                    <img
+                    <Image
                       src={weaponImageUrl}
                       alt={weaponName}
+                      width={64}
+                      height={64}
                       className="w-16 h-16 object-contain bg-gray-700 rounded-lg p-2 hover:bg-gray-600 transition-colors"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-16 h-16 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-2xl transition-colors">

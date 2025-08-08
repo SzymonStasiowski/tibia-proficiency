@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
+// Removed unused Link import
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useAllWeapons } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 
@@ -147,16 +148,13 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
                 >
                   <div className="flex items-center gap-3">
                     {weapon.image_url ? (
-                      <img 
+                      <Image 
                         src={weapon.image_url} 
                         alt={weapon.name}
+                        width={32}
+                        height={32}
                         className="w-8 h-8 object-contain flex-shrink-0"
-                        crossOrigin="anonymous"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                        }}
+                        unoptimized
                       />
                     ) : (
                       <div className="w-8 h-8 flex items-center justify-center text-xl flex-shrink-0">⚔️</div>

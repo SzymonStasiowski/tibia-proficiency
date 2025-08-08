@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useWeaponCategories, useWeapons, useHotWeapons, usePopularBuilds, Weapon as DbWeapon } from '@/hooks'
+import type { PopularBuild } from '@/hooks/useBuilds'
 import { weaponNameToSlug } from '@/lib/utils'
 import WeaponCategoryCard from '@/components/WeaponCategoryCard'
 import MostVotedBuilds from '@/components/MostVotedBuilds'
@@ -14,14 +15,14 @@ interface HotWeapon extends Partial<DbWeapon> { id: string; name: string; weapon
 interface HomeClientProps {
   initialCategories?: CategoryItem[]
   initialHotWeapons?: HotWeapon[]
-  initialPopularBuilds?: any[]
+  initialPopularBuilds?: PopularBuild[]
 }
 
 export default function HomeClient({ initialCategories, initialHotWeapons, initialPopularBuilds }: HomeClientProps) {
   const router = useRouter()
   
   // Use initial data for React Query hooks
-  const { data: categories, isLoading: categoriesLoading } = useWeaponCategories(initialCategories as any)
+  const { data: categories, isLoading: categoriesLoading } = useWeaponCategories(initialCategories as CategoryItem[] | undefined)
   const { data: popularBuilds, isLoading: popularBuildsLoading } = usePopularBuilds(10, initialPopularBuilds)
   const { data: weapons } = useWeapons()
   const { data: hotWeapons, isLoading: hotWeaponsLoading } = useHotWeapons(10, initialHotWeapons as any)
@@ -124,7 +125,7 @@ export default function HomeClient({ initialCategories, initialHotWeapons, initi
               {hotWeaponsData.map((weapon: HotWeapon, index: number) => (
                 <HotWeaponCard
                   key={weapon.id}
-                  weapon={weapon as any}
+                  weapon={weapon}
                   rank={index + 1}
                   isHot={true}
                 />

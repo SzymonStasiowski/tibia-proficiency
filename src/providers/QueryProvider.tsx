@@ -6,7 +6,7 @@ import { useState } from 'react'
 
 interface QueryProviderProps {
   children: React.ReactNode
-  initialData?: Record<string, any>
+  initialData?: Record<string, unknown>
 }
 
 export default function QueryProvider({ children, initialData }: QueryProviderProps) {

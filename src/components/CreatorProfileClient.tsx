@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Creator, CreatorStats } from '@/hooks/useCreators'
 import { weaponNameToSlug } from '@/lib/utils'
@@ -159,10 +160,13 @@ export default function CreatorProfileClient({
                   title={`Visit ${creator.channel_name} on ${creator.platform}`}
                 >
                   {creator.avatar_url ? (
-                    <img
+                    <Image
                       src={creator.avatar_url}
                       alt={creator.channel_name}
+                      width={128}
+                      height={128}
                       className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-32 h-32 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-4xl">
@@ -173,10 +177,13 @@ export default function CreatorProfileClient({
               ) : (
                 <>
                   {creator.avatar_url ? (
-                    <img
+                    <Image
                       src={creator.avatar_url}
                       alt={creator.channel_name}
+                      width={128}
+                      height={128}
                       className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-32 h-32 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-4xl">
@@ -228,10 +235,10 @@ export default function CreatorProfileClient({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                🌟 Creator's Choice Weapons
+                🌟 Creator&apos;s Choice Weapons
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Weapon builds personally recommended by {creator.channel_name}
+                 Weapon builds personally recommended by {creator.channel_name}
               </p>
             </div>
             
@@ -274,10 +281,13 @@ export default function CreatorProfileClient({
                   {/* Weapon Image */}
                   <div className="flex items-center justify-center">
                     {vote.weapons.image_url ? (
-                      <img
+                      <Image
                         src={vote.weapons.image_url}
                         alt={vote.weapons.name}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 object-contain"
+                        unoptimized
                       />
                     ) : (
                       <div className="text-2xl">⚔️</div>

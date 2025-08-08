@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks'
 import { generateCreatorToken, channelNameToSlug } from '@/lib/utils'
@@ -276,10 +277,13 @@ export default function AdminClient() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
                         {creator.avatar_url && (
-                          <img
+                          <Image
                             src={creator.avatar_url}
                             alt={creator.channel_name}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full"
+                            unoptimized
                           />
                         )}
                         <div>
@@ -352,10 +356,10 @@ export default function AdminClient() {
           </h3>
           <ol className="list-decimal list-inside space-y-2 text-blue-700 dark:text-blue-300">
             <li>Fill out the creator form with their channel information</li>
-            <li>Click "Create Creator" to generate their unique voting token</li>
-            <li>Copy the "Voting URL" and send it privately to the creator</li>
+            <li>Click &quot;Create Creator&quot; to generate their unique voting token</li>
+            <li>Copy the &quot;Voting URL&quot; and send it privately to the creator</li>
             <li>The creator uses this private URL to submit their votes</li>
-            <li>Share the "Public Profile" URL for fans to see their recommendations</li>
+            <li>Share the &quot;Public Profile&quot; URL for fans to see their recommendations</li>
             <li>Toggle creators active/inactive to control access</li>
           </ol>
         </div>

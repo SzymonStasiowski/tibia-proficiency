@@ -1,12 +1,13 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { weaponNameToSlug } from '@/lib/utils'
 
 interface HotWeapon {
   id: string
   name: string
-  weapon_type?: string
-  vocation?: string
-  image_url?: string
+  weapon_type?: string | null
+  vocation?: string | null
+  image_url?: string | null
   totalVotes: number
 }
 
@@ -71,23 +72,13 @@ export default function HotWeaponCard({ weapon, rank, isHot = true }: HotWeaponC
         
         <div className="text-center">
           {weapon.image_url ? (
-            <img 
+            <Image 
               src={weapon.image_url} 
               alt={weapon.name}
+              width={48}
+              height={48}
               className="w-12 h-12 mx-auto mb-3 object-contain"
-              crossOrigin="anonymous"
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.style.display = 'none'
-                const parent = target.parentElement
-                if (parent) {
-                  const fallback = document.createElement('div')
-                  fallback.textContent = style.icon
-                  fallback.className = 'text-3xl mb-3'
-                  parent.insertBefore(fallback, target)
-                }
-              }}
+              unoptimized
             />
           ) : (
             <div className="text-3xl mb-3">{style.icon}</div>

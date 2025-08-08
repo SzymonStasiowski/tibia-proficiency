@@ -52,10 +52,10 @@ export default function WeaponClient({
   const initialTab = searchParams.get('tab')
   const [mode, setMode] = useState<'perks' | 'builds'>(initialTab === 'builds' ? 'builds' : 'perks')
   const [showCreateBuild, setShowCreateBuild] = useState(false)
-  const [buildForm, setBuildForm] = useState({
+  const [buildForm, setBuildForm] = useState<{ name: string; description: string; situationTags: string[] }>({
     name: '',
     description: '',
-    situationTags: [] as string[]
+    situationTags: []
   })
   
   // Builds-related hooks
@@ -301,8 +301,8 @@ export default function WeaponClient({
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Special creator mode header */}
       {isCreatorMode && (
-        <div className="bg-yellow-600 text-yellow-900 py-2 px-4 text-center font-semibold">
-          🎯 Creator Mode: Your vote will be featured as "Creator's Choice"
+          <div className="bg-yellow-600 text-yellow-900 py-2 px-4 text-center font-semibold">
+          🎯 Creator Mode: Your vote will be featured as &quot;Creator&apos;s Choice&quot;
         </div>
       )}
       
@@ -411,7 +411,7 @@ export default function WeaponClient({
                 perks={perksData}
                 onPerkSelect={handlePerkSelect}
                 selectedPerks={selectedPerks}
-                votes={allVotes || []}
+                votes={(allVotes || []).map(v => ({ selected_perks: Array.isArray(v.selected_perks) ? (v.selected_perks as string[]) : [] }))}
               />
               
               {/* Compact Action Buttons */}

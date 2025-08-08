@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface PerkIconProps {
   iconUrl: string
@@ -49,12 +50,13 @@ export default function PerkIcon({
   return (
     <div className={`relative ${sizeClasses} ${className}`}>
       {!imageError ? (
-        <img
+        <Image
           src={iconUrl}
           alt={altText}
-          className="w-full h-full object-cover rounded bg-gray-700 border border-gray-600"
-          crossOrigin="anonymous"
-          referrerPolicy="no-referrer"
+          fill
+          sizes="100%"
+          className="object-cover rounded bg-gray-700 border border-gray-600"
+          unoptimized
           onError={() => setImageError(true)}
         />
       ) : (
@@ -69,12 +71,13 @@ export default function PerkIcon({
       {/* Overlay Icon */}
       {overlayIcon && !overlayError && (
         <div className="absolute top-0 right-0 w-4 h-4 bg-gray-800 border border-gray-500 rounded-sm overflow-hidden">
-          <img
+          <Image
             src={overlayIcon}
             alt="Type indicator"
+            width={16}
+            height={16}
             className="w-full h-full object-cover"
-            crossOrigin="anonymous"
-            referrerPolicy="no-referrer"
+            unoptimized
             onError={() => setOverlayError(true)}
           />
         </div>

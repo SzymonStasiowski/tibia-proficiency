@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useMemo } from 'react'
 import { useWeaponsByCategory, useWeaponCategories } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
@@ -165,7 +166,7 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
           </div>
           {debouncedSearchQuery.trim() && (
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
-              Showing {weaponsData.length} weapons matching "{debouncedSearchQuery}"
+              Showing {weaponsData.length} weapons matching &quot;{debouncedSearchQuery}&quot;
             </p>
           )}
         </div>
@@ -211,23 +212,13 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                     )}
                   <div className="text-center">
                     {weapon.image_url ? (
-                      <img 
+                      <Image 
                         src={weapon.image_url as string} 
                         alt={weapon.name || 'Weapon'}
+                        width={64}
+                        height={64}
                         className="w-16 h-16 mx-auto mb-4 object-contain"
-                        crossOrigin="anonymous"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                          const parent = target.parentElement
-                          if (parent) {
-                            const fallback = document.createElement('div')
-                            fallback.textContent = '⚔️'
-                            fallback.className = 'text-4xl mb-4'
-                            parent.insertBefore(fallback, target)
-                          }
-                        }}
+                        unoptimized
                       />
                     ) : (
                       <div className="text-4xl mb-4">⚔️</div>

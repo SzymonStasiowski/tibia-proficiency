@@ -111,7 +111,7 @@ interface WeaponProficiencyGridProps {
   perks: DatabasePerk[]
   onPerkSelect?: (perkId: string) => void
   selectedPerks?: string[] // Array of perk IDs
-  votes?: any[] // Array of all votes for percentage calculation
+  votes?: { selected_perks?: string[] }[] // Array of all votes for percentage calculation
 }
 
 export default function WeaponProficiencyGrid({ 
@@ -132,7 +132,7 @@ export default function WeaponProficiencyGrid({
   }, {} as Record<number, DatabasePerk[]>)
 
   // Calculate percentages for each perk
-  const perkPercentages = useMemo(() => {
+  const perkPercentages = useMemo<Record<string, number>>(() => {
     if (!votes.length) return {}
     
     // Count votes for each perk
