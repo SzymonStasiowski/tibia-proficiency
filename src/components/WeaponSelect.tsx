@@ -151,7 +151,7 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
                 >
                   <div className="flex items-center gap-3">
                     {(() => {
-                      const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weapon.image_url || undefined })
+                      const raw = getImageFromRecord({ media: (weapon as any).media || null, legacyUrl: weapon.image_url || undefined })
                       const url = asDisplayUrl(raw)
                       return url ? (
                         <Image 

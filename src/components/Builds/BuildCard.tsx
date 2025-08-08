@@ -124,7 +124,7 @@ export default function BuildCard({
                 onClick={handleWeaponClick}
               >
                 {(() => {
-                  const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weaponImageUrl })
+                  const raw = getImageFromRecord({ media: (build as any).media || null, legacyUrl: weaponImageUrl })
                   const url = asDisplayUrl(raw)
                   return url ? (
                     <Image
@@ -235,7 +235,7 @@ export default function BuildCard({
                   onClick={handleWeaponClick}
                 >
                   {(() => {
-                    const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weaponImageUrl })
+                    const raw = getImageFromRecord({ media: (build as any).media || null, legacyUrl: weaponImageUrl })
                     const url = asDisplayUrl(raw)
                     return url ? (
                       <Image

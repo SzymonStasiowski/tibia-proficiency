@@ -25,6 +25,7 @@ interface WeaponListItem {
   name?: string | null
   vocation?: string | null
   image_url?: string | null
+  media?: { id: string; storage_path: string } | null
   totalVotes?: number
 }
 
@@ -219,7 +220,7 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                     )}
                   <div className="text-center">
                     {(() => {
-                      const raw = getImageFromRecord({ media: undefined as any, legacyUrl: weapon.image_url || undefined })
+                      const raw = getImageFromRecord({ media: (weapon as any).media || null, legacyUrl: weapon.image_url || undefined })
                       const url = asDisplayUrl(raw)
                       return url ? (
                         <Image
