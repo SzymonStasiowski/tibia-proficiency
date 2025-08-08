@@ -1,8 +1,28 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
+/* Theme tokens aligned with current look */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0b0d;
+  --foreground: #e5e7eb;
+  --card: #111827;
+  --card-foreground: #e5e7eb;
+  --popover: #111827;
+  --popover-foreground: #e5e7eb;
+  --primary: #2563eb; /* blue-600 */
+  --primary-foreground: #ffffff;
+  --secondary: #374151; /* gray-700 */
+  --secondary-foreground: #e5e7eb;
+  --muted: #1f2937; /* gray-800 */
+  --muted-foreground: #9ca3af; /* gray-400 */
+  --accent: #059669; /* emerald-600 */
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626; /* red-600 */
+  --destructive-foreground: #ffffff;
+  --border: #374151; /* gray-700 */
+  --input: #374151;
+  --ring: #3b82f6; /* blue-500 */
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -14,8 +34,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0b0b0d;
+    --foreground: #e5e7eb;
   }
 }
 
@@ -23,4 +43,15 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Base layer mappings for shadcn tokens */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
 }

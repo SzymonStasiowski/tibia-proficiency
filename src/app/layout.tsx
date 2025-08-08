@@ -6,6 +6,7 @@ import StructuredData from "@/components/StructuredData";
 import Footer from "@/components/Footer";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { AppToaster } from '@/components/ui/sonner-toaster'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +25,7 @@ const jersey25 = Jersey_25({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: "TibiaVote - Community Weapon Proficiency Builder & Voting Platform",
   description: "Build and vote for the best weapon proficiency combinations in Tibia. Community-driven weapon builds, perk rankings, and statistical analysis for all Tibia weapons. Find the most popular weapon setups voted by the community.",
   keywords: ['Tibia', 'weapon proficiency', 'weapon builds', 'perk combinations', 'MMORPG', 'community voting', 'weapon stats', 'Tibia weapons', 'game builds', 'RPG builds', 'TibiaVote'],
@@ -94,6 +96,7 @@ export default function RootLayout({
           </div>
           <Footer />
         </QueryProvider>
+        <AppToaster />
         <Analytics />
         <SpeedInsights />
       </body>

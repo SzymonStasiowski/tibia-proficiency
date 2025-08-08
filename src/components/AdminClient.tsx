@@ -7,7 +7,12 @@ import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks'
 import { generateCreatorToken, channelNameToSlug } from '@/lib/utils'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import Toast from '@/components/Toast'
+// Local Toast component is deprecated in favor of Sonner toaster
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 interface CreatorFormData {
   channel_name: string
@@ -18,7 +23,7 @@ interface CreatorFormData {
 
 export default function AdminClient() {
   const router = useRouter()
-  const { toasts, removeToast, error: showError, success } = useToast()
+  const { error: showError, success } = useToast()
   const queryClient = useQueryClient()
   
   const [formData, setFormData] = useState<CreatorFormData>({
@@ -159,99 +164,83 @@ export default function AdminClient() {
                 Create and manage content creator accounts
               </p>
             </div>
-            <button
-              onClick={() => router.push('/')}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors"
-            >
-              ← Back to Site
-            </button>
+            <Button variant="secondary" onClick={() => router.push('/')}>← Back to Site</Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Create Creator Form */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-              Create New Creator
-            </h2>
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create New Creator</h2>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="channel_name">Channel Name *</Label>
+                  <Input
+                    id="channel_name"
+                    type="text"
+                    name="channel_name"
+                    value={formData.channel_name}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Shroud Gaming, Summit1G"
+                    required
+                  />
+                  {formData.channel_name && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Profile URL: /{channelNameToSlug(formData.channel_name)}
+                    </p>
+                  )}
+                </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Channel Name *
-                </label>
-                <input
-                  type="text"
-                  name="channel_name"
-                  value={formData.channel_name}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Shroud Gaming, Summit1G"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                {formData.channel_name && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Profile URL: /{channelNameToSlug(formData.channel_name)}
-                  </p>
-                )}
-              </div>
+                <div>
+                  <Label htmlFor="avatar_url">Avatar URL</Label>
+                  <Input
+                    id="avatar_url"
+                    type="url"
+                    name="avatar_url"
+                    value={formData.avatar_url}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/avatar.jpg"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Avatar URL
-                </label>
-                <input
-                  type="url"
-                  name="avatar_url"
-                  value={formData.avatar_url}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/avatar.jpg"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="channel_url">Channel URL</Label>
+                  <Input
+                    id="channel_url"
+                    type="url"
+                    name="channel_url"
+                    value={formData.channel_url}
+                    onChange={handleInputChange}
+                    placeholder="https://twitch.tv/username"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Channel URL
-                </label>
-                <input
-                  type="url"
-                  name="channel_url"
-                  value={formData.channel_url}
-                  onChange={handleInputChange}
-                  placeholder="https://twitch.tv/username"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="platform">Platform</Label>
+                  <NativeSelect
+                    id="platform"
+                    name="platform"
+                    value={formData.platform}
+                    onChange={(e) => handleInputChange(e as React.ChangeEvent<HTMLSelectElement>)}
+                  >
+                    <option value="twitch">Twitch</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="kick">Kick</option>
+                  </NativeSelect>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Platform
-                </label>
-                <select
-                  name="platform"
-                  value={formData.platform}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="twitch">Twitch</option>
-                  <option value="youtube">YouTube</option>
-                  <option value="kick">Kick</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={createCreatorMutation.isPending}
-                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-semibold transition-colors"
-              >
-                {createCreatorMutation.isPending ? 'Creating...' : 'Create Creator'}
-              </button>
-            </form>
-          </div>
+                <Button type="submit" disabled={createCreatorMutation.isPending} className="w-full">
+                  {createCreatorMutation.isPending ? 'Creating...' : 'Create Creator'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* Existing Creators List */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <Card>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Existing Creators ({creators.length})
             </h2>
@@ -296,19 +285,13 @@ export default function AdminClient() {
                         </div>
                       </div>
                       
-                      <button
-                        onClick={() => toggleCreatorMutation.mutate({ 
-                          id: creator.id, 
-                          is_active: creator.is_active 
-                        })}
-                        className={`px-3 py-1 text-xs rounded-full font-medium ${
-                          creator.is_active
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                        }`}
+                      <Button
+                        variant="ghost"
+                        className={creator.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}
+                        onClick={() => toggleCreatorMutation.mutate({ id: creator.id, is_active: creator.is_active })}
                       >
                         {creator.is_active ? 'Active' : 'Inactive'}
-                      </button>
+                      </Button>
                     </div>
 
                     <div className="mt-3 space-y-2">
@@ -318,12 +301,7 @@ export default function AdminClient() {
                           <code className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded flex-1 truncate">
                             {getCreatorVotingUrl(creator.creator_token)}
                           </code>
-                          <button
-                            onClick={() => copyToClipboard(getCreatorVotingUrl(creator.creator_token))}
-                            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                          >
-                            Copy
-                          </button>
+                          <Button size="sm" onClick={() => copyToClipboard(getCreatorVotingUrl(creator.creator_token))}>Copy</Button>
                         </div>
                       </div>
                       
@@ -333,12 +311,7 @@ export default function AdminClient() {
                           <code className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded flex-1 truncate">
                             {getCreatorProfileUrl(creator.creator_slug)}
                           </code>
-                          <button
-                            onClick={() => copyToClipboard(getCreatorProfileUrl(creator.creator_slug))}
-                            className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                          >
-                            Copy
-                          </button>
+                          <Button size="sm" variant="secondary" onClick={() => copyToClipboard(getCreatorProfileUrl(creator.creator_slug))}>Copy</Button>
                         </div>
                       </div>
                     </div>
@@ -346,7 +319,7 @@ export default function AdminClient() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* Instructions */}
@@ -365,17 +338,7 @@ export default function AdminClient() {
         </div>
       </div>
       
-      {/* Toast Notifications */}
-      <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      {/* Toasts handled globally by <AppToaster /> in layout */}
     </div>
   )
 }
