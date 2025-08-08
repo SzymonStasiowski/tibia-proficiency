@@ -1,4 +1,4 @@
-import { Weapon, Perk } from '@/hooks/useWeapons'
+import { Weapon } from '@/hooks/useWeapons'
 import { Perk as DatabasePerk } from '@/hooks/usePerks'
 // Removed legacy PerkSlot (mockData-based)
 import PerkIcon from './PerkIcon'

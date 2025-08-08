@@ -44,7 +44,7 @@ export default function WeaponClient({
   const isLoadingPerks = perksLoading && !initialPerks
   
   // Check if user has already voted for this weapon - optimized to use single request
-  const { allVotes, userVote: existingVote, isLoading: votesLoading } = useWeaponVotesWithUser(weaponData?.id || '', userSession)
+  const { allVotes, userVote: existingVote } = useWeaponVotesWithUser(weaponData?.id || '', userSession)
   
   const [selectedPerks, setSelectedPerks] = useState<string[]>([]) // Array of perk IDs
 
@@ -60,7 +60,7 @@ export default function WeaponClient({
   
   // Builds-related hooks
   const { data: builds, isLoading: buildsLoading } = useWeaponBuilds(weaponData?.id || '')
-  const { data: userBuildVotes, isLoading: userBuildVotesLoading } = useUserBuildVotes(userSession)
+  const { data: userBuildVotes } = useUserBuildVotes(userSession)
   const voteForBuildMutation = useVoteForBuild()
   const removeVoteFromBuildMutation = useRemoveVoteFromBuild()
   const createBuildMutation = useCreateBuild()
@@ -240,8 +240,9 @@ export default function WeaponClient({
         
         success('✅ Vote submitted successfully!')
       }
-    } catch (error: any) {
-      showError(error.message || 'Failed to process vote. Please try again.')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to process vote. Please try again.'
+      showError(message)
     } finally {
       setVotingBuildId(null)
     }
@@ -281,8 +282,9 @@ export default function WeaponClient({
       setShowCreateBuild(false)
       setMode('builds')
       
-    } catch (error: any) {
-      showError(error.message || 'Failed to create build. Please try again.')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create build. Please try again.'
+      showError(message)
     }
   }
 

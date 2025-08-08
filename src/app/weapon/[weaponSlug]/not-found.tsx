@@ -6,7 +6,7 @@ export default function NotFound() {
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4 text-white">Weapon Not Found</h1>
         <p className="text-gray-400 mb-6">
-          The weapon you're looking for doesn't exist or the URL is incorrect.
+          The weapon you&apos;re looking for doesn&apos;t exist or the URL is incorrect.
         </p>
         <div className="space-y-4">
           <Link 

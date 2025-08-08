@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { createHash } from 'crypto'
 
 // Enhanced session management with security improvements
 export function useUserSession(): string {

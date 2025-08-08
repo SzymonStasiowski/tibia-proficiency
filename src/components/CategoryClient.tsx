@@ -7,9 +7,23 @@ import { useWeaponsByCategory, useWeaponCategories } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 import { useDebounce } from '@/hooks/useDebounce'
 
+interface CategoryItem {
+  id: string
+  name: string
+  weaponCount: number
+}
+
+interface WeaponListItem {
+  id: string
+  name?: string | null
+  vocation?: string | null
+  image_url?: string | null
+  totalVotes?: number
+}
+
 interface CategoryClientProps {
-  initialWeapons?: any[]
-  initialCategories?: any[]
+  initialWeapons?: WeaponListItem[]
+  initialCategories?: CategoryItem[]
 }
 
 export default function CategoryClient({ initialWeapons, initialCategories }: CategoryClientProps) {
@@ -20,29 +34,29 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   
-  const { data: categories } = useWeaponCategories(initialCategories)
-  const { data: weapons, isLoading: weaponsLoading, error: weaponsError } = useWeaponsByCategory(categoryId, initialWeapons)
+  const { data: categories } = useWeaponCategories(initialCategories as any)
+  const { data: weapons, isLoading: weaponsLoading, error: weaponsError } = useWeaponsByCategory(categoryId, initialWeapons as any)
   
   // Use server data as fallback - prioritize server data since hooks might not be working
-  const categoriesData = initialCategories || categories || []
-  const rawWeaponsData = initialWeapons || weapons || []
+  const categoriesData: CategoryItem[] = (initialCategories as CategoryItem[] | undefined) || (categories as CategoryItem[] | undefined) || []
+  const rawWeaponsData: WeaponListItem[] = (initialWeapons as WeaponListItem[] | undefined) || (weapons as unknown as WeaponListItem[]) || []
   const isLoadingWeapons = weaponsLoading && !initialWeapons
   
   // Filter and sort weapons
-  const weaponsData = useMemo(() => {
-    let filtered = rawWeaponsData
+  const weaponsData: WeaponListItem[] = useMemo(() => {
+    let filtered: WeaponListItem[] = [...rawWeaponsData]
     
     // Apply search filter
     if (debouncedSearchQuery.trim()) {
       const query = debouncedSearchQuery.toLowerCase().trim()
-      filtered = filtered.filter(weapon => 
-        weapon.name?.toLowerCase().includes(query) ||
-        weapon.vocation?.toLowerCase().includes(query)
+      filtered = filtered.filter((weapon: WeaponListItem) => 
+        (weapon.name || '').toLowerCase().includes(query) ||
+        (weapon.vocation || '').toLowerCase().includes(query)
       )
     }
     
     // Sort by total votes (descending), then by name
-    return filtered.sort((a, b) => {
+    return filtered.sort((a: WeaponListItem, b: WeaponListItem) => {
       const votesA = a.totalVotes || 0
       const votesB = b.totalVotes || 0
       
@@ -185,7 +199,7 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
               return (
                 <Link 
                   key={weapon.id}
-                  href={`/weapon/${weaponNameToSlug(weapon.name)}`}
+                  href={`/weapon/${weaponNameToSlug(weapon.name || '')}`}
                   className="block"
                 >
                   <div className={`${borderStyle} rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 relative`}>
@@ -198,8 +212,8 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                   <div className="text-center">
                     {weapon.image_url ? (
                       <img 
-                        src={weapon.image_url} 
-                        alt={weapon.name}
+                        src={weapon.image_url as string} 
+                        alt={weapon.name || 'Weapon'}
                         className="w-16 h-16 mx-auto mb-4 object-contain"
                         crossOrigin="anonymous"
                         referrerPolicy="no-referrer"

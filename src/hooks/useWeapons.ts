@@ -138,14 +138,14 @@ export function useWeaponCategories(initialData?: any[]) {
   })
 }
 
-export function useWeaponsByCategory(categoryId: string, initialData?: any[]) {
+export function useWeaponsByCategory(categoryId: string, initialData?: Weapon[]) {
   // Convert category ID back to weapon type
   const weaponType = categoryId === 'all' ? undefined : 
     categoryId.replace(/-/g, ' ')
   
   return useQuery({
     queryKey: weaponKeys.list(weaponType || 'all'),
-    queryFn: async () => {
+    queryFn: async (): Promise<(Weapon & { votes: { id: string }[]; totalVotes: number })[]> => {
       let query = supabase.from('weapons').select(`
         *,
         votes (id)
@@ -160,24 +160,22 @@ export function useWeaponsByCategory(categoryId: string, initialData?: any[]) {
       if (error) throw error
       
       // Calculate total votes for each weapon from the votes table
-      const weaponsWithVotes = (data || []).map(weapon => {
-        const totalVotes = (weapon.votes as any[])?.length || 0
-        return {
-          ...weapon,
-          totalVotes
-        }
+      const weaponsWithVotes = (data || []).map((weapon) => {
+        const votesArray = (weapon.votes as { id: string }[]) || []
+        const totalVotes = votesArray.length
+        return { ...weapon, votes: votesArray, totalVotes }
       })
       
       return weaponsWithVotes
     },
-    initialData: initialData,
+    initialData: initialData as any,
   })
 }
 
-export function useHotWeapons(limit: number = 10, initialData?: any[]) {
+export function useHotWeapons(limit: number = 10, initialData?: Weapon[]) {
   return useQuery({
     queryKey: [...weaponKeys.all, 'hot', limit],
-    queryFn: async () => {
+    queryFn: async (): Promise<(Weapon & { votes: { id: string }[]; totalVotes: number })[]> => {
       // Get all weapons with their vote counts from the votes table
       const { data, error } = await supabase
         .from('weapons')
@@ -190,12 +188,10 @@ export function useHotWeapons(limit: number = 10, initialData?: any[]) {
       if (error) throw error
       
       // Calculate total votes for each weapon and sort by vote count
-      const weaponsWithVotes = (data || []).map(weapon => {
-        const totalVotes = (weapon.votes as any[])?.length || 0
-        return {
-          ...weapon,
-          totalVotes
-        }
+      const weaponsWithVotes = (data || []).map((weapon) => {
+        const votesArray = (weapon.votes as { id: string }[]) || []
+        const totalVotes = votesArray.length
+        return { ...weapon, votes: votesArray, totalVotes }
       })
       
       // Sort by vote count (descending) and take the top N
@@ -205,6 +201,6 @@ export function useHotWeapons(limit: number = 10, initialData?: any[]) {
       
       return hotWeapons
     },
-    initialData: initialData,
+    initialData: initialData as any,
   })
 }

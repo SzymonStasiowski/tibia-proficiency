@@ -86,8 +86,9 @@ export default function AdminClient() {
         platform: 'twitch'
       })
     },
-    onError: (error: any) => {
-      showError(`Failed to create creator: ${error.message}`)
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err)
+      showError(`Failed to create creator: ${message}`)
     }
   })
 
@@ -108,8 +109,9 @@ export default function AdminClient() {
       queryClient.invalidateQueries({ queryKey: ['admin-creators'] })
       success(`Creator ${data.is_active ? 'activated' : 'deactivated'} successfully!`)
     },
-    onError: (error: any) => {
-      showError(`Failed to update creator: ${error.message}`)
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err)
+      showError(`Failed to update creator: ${message}`)
     }
   })
 

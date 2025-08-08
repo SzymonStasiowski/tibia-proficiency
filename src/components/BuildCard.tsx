@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import BuildPerkDisplay from '@/components/Builds/BuildPerkDisplay'
-import SmartTooltip from '@/components/SmartTooltip'
+import SmartTooltip from './SmartTooltip'
 import { weaponNameToSlug } from '@/lib/utils'
 import type { PopularBuild, Build } from '@/hooks/useBuilds'
 
@@ -33,7 +33,7 @@ export default function BuildCard({
 }: BuildCardProps) {
   const router = useRouter()
   const [isWeaponHovered, setIsWeaponHovered] = useState(false)
-  // const [imageError, setImageError] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   // Get weapon style based on weapon type - similar to HotWeaponCard
   const getWeaponFallback = (weaponName: string, weaponType?: string) => {
@@ -82,7 +82,7 @@ export default function BuildCard({
   const weaponType = (build as any)?.weapon_type || (weaponData as any)?.weapon_type
   
   // Get fallback styling
-  // const fallbackStyle = getWeaponFallback(weaponName, weaponType)
+  const fallbackStyle = getWeaponFallback(weaponName, weaponType)
 
   const handleWeaponClick = () => {
     const weaponSlug = weaponNameToSlug(weaponName)

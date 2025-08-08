@@ -160,13 +160,13 @@ export function useBuildPerks(buildIds: string[]) {
       if (perksError) throw perksError
       
       // Create lookup map for perks
-      const perkLookup = (perks || []).reduce((acc, perk) => {
-        acc[perk.id] = perk
-        return acc
-      }, {} as Record<string, any>)
+      const perkLookup: Record<string, Tables<'perks'>> = {}
+      ;(perks || []).forEach((perk) => {
+        perkLookup[perk.id] = perk as Tables<'perks'>
+      })
       
       // Return perks organized by build ID
-      const result: Record<string, any[]> = {}
+      const result: Record<string, Tables<'perks'>[]> = {}
       Object.entries(buildPerkMap).forEach(([buildId, perkIds]) => {
         result[buildId] = perkIds.map(id => perkLookup[id]).filter(Boolean)
       })

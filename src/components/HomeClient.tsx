@@ -1,17 +1,19 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWeaponCategories, useWeapons, useHotWeapons, usePopularBuilds } from '@/hooks'
+import { useWeaponCategories, useWeapons, useHotWeapons, usePopularBuilds, Weapon as DbWeapon } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 import WeaponCategoryCard from '@/components/WeaponCategoryCard'
 import MostVotedBuilds from '@/components/MostVotedBuilds'
 import WeaponSelect from '@/components/WeaponSelect'
 import HotWeaponCard from '@/components/HotWeaponCard'
 
+interface CategoryItem { id: string; name: string; weaponCount: number }
+interface HotWeapon extends Partial<DbWeapon> { id: string; name: string; weapon_type?: string | null; vocation?: string | null; image_url?: string | null; totalVotes: number }
+
 interface HomeClientProps {
-  initialCategories?: any[]
-  initialHotWeapons?: any[]
+  initialCategories?: CategoryItem[]
+  initialHotWeapons?: HotWeapon[]
   initialPopularBuilds?: any[]
 }
 
@@ -19,16 +21,16 @@ export default function HomeClient({ initialCategories, initialHotWeapons, initi
   const router = useRouter()
   
   // Use initial data for React Query hooks
-  const { data: categories, isLoading: categoriesLoading } = useWeaponCategories(initialCategories)
+  const { data: categories, isLoading: categoriesLoading } = useWeaponCategories(initialCategories as any)
   const { data: popularBuilds, isLoading: popularBuildsLoading } = usePopularBuilds(10, initialPopularBuilds)
-  const { data: weapons, isLoading: weaponsLoading } = useWeapons()
-  const { data: hotWeapons, isLoading: hotWeaponsLoading } = useHotWeapons(10, initialHotWeapons)
+  const { data: weapons } = useWeapons()
+  const { data: hotWeapons, isLoading: hotWeaponsLoading } = useHotWeapons(10, initialHotWeapons as any)
   
   // Use server data as fallback if client data is loading
-  const categoriesData = categories || initialCategories || []
+  const categoriesData = (categories || initialCategories || []) as CategoryItem[]
   const popularBuildsData = popularBuilds || initialPopularBuilds || []
-  const weaponsData = weapons || []
-  const hotWeaponsData = hotWeapons || initialHotWeapons || []
+  const weaponsData = (weapons || []) as DbWeapon[]
+  const hotWeaponsData = (hotWeapons || initialHotWeapons || []) as HotWeapon[]
   const isLoadingCategories = categoriesLoading && !initialCategories
   const isLoadingPopularBuilds = popularBuildsLoading && !initialPopularBuilds
   const isLoadingHotWeapons = hotWeaponsLoading && !initialHotWeapons
@@ -119,10 +121,10 @@ export default function HomeClient({ initialCategories, initialHotWeapons, initi
             </div>
           ) : hotWeaponsData && hotWeaponsData.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
-              {hotWeaponsData.map((weapon, index) => (
+              {hotWeaponsData.map((weapon: HotWeapon, index: number) => (
                 <HotWeaponCard
                   key={weapon.id}
-                  weapon={weapon}
+                  weapon={weapon as any}
                   rank={index + 1}
                   isHot={true}
                 />
