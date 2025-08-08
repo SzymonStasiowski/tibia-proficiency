@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import PerkIcon from './PerkIcon'
-import SmartTooltip from './SmartTooltip'
+import PerkIcon from '@/components/PerkIcon'
+import SmartTooltip from '@/components/SmartTooltip'
 
 interface DatabasePerk {
   id: string

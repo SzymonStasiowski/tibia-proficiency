@@ -1,6 +1,6 @@
 'use client'
 
-import BuildCard from './BuildCard'
+import BuildCard from '@/components/Builds/BuildCard'
 import type { PopularBuild } from '@/hooks/useBuilds'
 import { useBuildPerks } from '@/hooks/useBuilds'
 

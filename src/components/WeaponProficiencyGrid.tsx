@@ -1,6 +1,6 @@
 import { Weapon, Perk } from '@/hooks/useWeapons'
 import { Perk as DatabasePerk } from '@/hooks/usePerks'
-import PerkSlot from './PerkSlot'
+// Removed legacy PerkSlot (mockData-based)
 import PerkIcon from './PerkIcon'
 import SmartTooltip from './SmartTooltip'
 import { useState, useMemo } from 'react'

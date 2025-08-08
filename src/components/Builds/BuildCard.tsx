@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import BuildPerkDisplay from './BuildPerkDisplay'
-import SmartTooltip from './SmartTooltip'
+import BuildPerkDisplay from '@/components/Builds/BuildPerkDisplay'
+import SmartTooltip from '@/components/SmartTooltip'
 import { weaponNameToSlug } from '@/lib/utils'
 import type { PopularBuild, Build } from '@/hooks/useBuilds'
 
@@ -33,6 +33,42 @@ export default function BuildCard({
 }: BuildCardProps) {
   const router = useRouter()
   const [isWeaponHovered, setIsWeaponHovered] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  // Get weapon style based on weapon type - similar to HotWeaponCard
+  const getWeaponFallback = (weaponName: string, weaponType?: string) => {
+    const lowerType = weaponType?.toLowerCase() || ''
+    const lowerName = weaponName?.toLowerCase() || ''
+    
+    // First check weapon type if available
+    if (lowerType.includes('sword') || lowerName.includes('sword')) {
+      return { icon: '⚔️', bgGradient: 'from-red-500/20 to-red-700/20' }
+    }
+    if (lowerType.includes('axe') || lowerName.includes('axe')) {
+      return { icon: '🪓', bgGradient: 'from-orange-500/20 to-orange-700/20' }
+    }
+    if (lowerType.includes('club') || lowerName.includes('club') || lowerName.includes('hammer')) {
+      return { icon: '🔨', bgGradient: 'from-yellow-500/20 to-yellow-700/20' }
+    }
+    if (lowerType.includes('distance') || lowerType.includes('bow') || lowerName.includes('bow')) {
+      return { icon: '🏹', bgGradient: 'from-green-500/20 to-green-700/20' }
+    }
+    if (lowerType.includes('crossbow') || lowerName.includes('crossbow')) {
+      return { icon: '🎯', bgGradient: 'from-purple-500/20 to-purple-700/20' }
+    }
+    if (lowerType.includes('wand') || lowerName.includes('wand')) {
+      return { icon: '✨', bgGradient: 'from-blue-500/20 to-blue-700/20' }
+    }
+    if (lowerType.includes('rod') || lowerName.includes('rod')) {
+      return { icon: '🔮', bgGradient: 'from-indigo-500/20 to-indigo-700/20' }
+    }
+    if (lowerType.includes('spear') || lowerName.includes('spear')) {
+      return { icon: '🗡️', bgGradient: 'from-pink-500/20 to-pink-700/20' }
+    }
+    
+    // Default fallback
+    return { icon: '⚔️', bgGradient: 'from-gray-500/20 to-gray-700/20' }
+  }
 
   const handleVote = () => {
     if (onVote) {
@@ -43,6 +79,10 @@ export default function BuildCard({
   // Get weapon info from either build (PopularBuild) or weaponData prop
   const weaponName = (build as PopularBuild).weapon_name || weaponData?.name || 'Unknown Weapon'
   const weaponImageUrl = (build as PopularBuild).weapon_image_url || weaponData?.image_url
+  const weaponType = (build as any)?.weapon_type || (weaponData as any)?.weapon_type
+  
+  // Get fallback styling
+  const fallbackStyle = getWeaponFallback(weaponName, weaponType)
 
   const handleWeaponClick = () => {
     const weaponSlug = weaponNameToSlug(weaponName)

@@ -38,60 +38,7 @@ export async function getWeaponCategories() {
   }
 }
 
-export async function getCommunityStats() {
-  try {
-    // Get total votes count
-    const { count: totalVotes } = await supabaseServer
-      .from('votes')
-      .select('*', { count: 'exact', head: true })
-    
-    // Get most voted weapon
-    const { data: weaponVotes } = await supabaseServer
-      .from('votes')
-      .select(`
-        weapon_id,
-        weapons!inner(name)
-      `)
-    
-    // Count votes per weapon
-    const weaponVoteCounts = (weaponVotes || []).reduce((acc, vote) => {
-      const weaponId = vote.weapon_id
-      const weaponName = (vote.weapons as any)?.name || 'Unknown'
-      
-      if (!acc[weaponId]) {
-        acc[weaponId] = { name: weaponName, count: 0 }
-      }
-      acc[weaponId].count++
-      return acc
-    }, {} as Record<string, { name: string; count: number }>)
-    
-    // Find most voted weapon
-    const mostVotedWeapon = Object.values(weaponVoteCounts).reduce(
-      (max, current) => (current.count > (max?.votes || 0) ? { name: current.name, votes: current.count } : max),
-      null as { name: string; votes: number } | null
-    )
-    
-    // Get count of weapons
-    const { count: newestWeapons } = await supabaseServer
-      .from('weapons')
-      .select('*', { count: 'exact', head: true })
-    
-    return {
-      totalVotes: totalVotes || 0,
-      mostVotedWeapon,
-      newestWeapons: newestWeapons || 0,
-      trendingDebate: 'What perks work best for your playstyle?',
-    }
-  } catch (error) {
-    console.error('Error fetching community stats:', error)
-    return {
-      totalVotes: 0,
-      mostVotedWeapon: null,
-      newestWeapons: 0,
-      trendingDebate: 'What perks work best for your playstyle?',
-    }
-  }
-}
+// Removed getCommunityStats as it had no usage; reintroduce if needed.
 
 export async function getWeaponsByCategory(categoryId: string) {
   try {

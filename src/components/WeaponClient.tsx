@@ -6,7 +6,7 @@ import { useWeaponByName, useWeaponPerks, useSubmitVote, useUserSession, useWeap
 import { useSubmitCreatorVote } from '@/hooks/useCreators'
 import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
-import BuildCard from '@/components/BuildCard'
+import BuildCard from '@/components/Builds/BuildCard'
 
 import Toast from '@/components/Toast'
 import { useToast } from '@/hooks/useToast'

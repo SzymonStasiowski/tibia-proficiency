@@ -50,6 +50,4 @@ export function isValidCreatorToken(token: string): boolean {
 }
 
 // Alternative: if you prefer no formatting to avoid any hydration issues
-export function formatNumberSimple(num: number): string {
-  return num.toString()
-} 
+// Removed formatNumberSimple; use formatNumber for consistent formatting.
