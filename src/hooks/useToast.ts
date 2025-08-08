@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
+import { toast } from 'sonner'
 
 export interface Toast {
   id: string
@@ -7,19 +8,15 @@ export interface Toast {
 }
 
 export function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([])
-
   const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
-    const id = Math.random().toString(36).substr(2, 9)
-    const newToast: Toast = { id, message, type }
-    
-    setToasts(prev => [...prev, newToast])
-    
-    return id
-  }, [])
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
+    switch (type) {
+      case 'success':
+        return toast.success(message)
+      case 'error':
+        return toast.error(message)
+      default:
+        return toast(message)
+    }
   }, [])
 
   const success = useCallback((message: string) => addToast(message, 'success'), [addToast])
@@ -27,9 +24,9 @@ export function useToast() {
   const info = useCallback((message: string) => addToast(message, 'info'), [addToast])
 
   return {
-    toasts,
+    toasts: [],
     addToast,
-    removeToast,
+    removeToast: (_id: string) => {},
     success,
     error,
     info

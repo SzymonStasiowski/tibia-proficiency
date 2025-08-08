@@ -37,7 +37,7 @@ export default function MostVotedBuilds({ builds }: MostVotedBuildsProps) {
     <div>
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold mb-2">
-          🏆 <span className="text-yellow-500">Most Voted Builds</span>
+          🏆 <span className="text-yellow-400">Most Voted Builds</span>
         </h2>
         <p className="text-base md:text-lg text-gray-600 dark:text-gray-300">
           Top community builds across all weapons

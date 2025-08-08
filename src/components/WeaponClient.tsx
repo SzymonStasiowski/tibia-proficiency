@@ -8,9 +8,15 @@ import { slugToWeaponName } from '@/lib/utils'
 import WeaponProficiencyGrid from '@/components/WeaponProficiencyGrid'
 import BuildCard from '@/components/Builds/BuildCard'
 
-import Toast from '@/components/Toast'
+// Local Toast component removed; Sonner toaster is global
 import { useToast } from '@/hooks/useToast'
 import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Toolbar, ToolbarSection } from '@/components/ui/toolbar'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface WeaponClientProps {
   weaponSlug: string
@@ -69,7 +75,7 @@ export default function WeaponClient({
   const [votingBuildId, setVotingBuildId] = useState<string | null>(null)
   
   // Toast system
-  const { toasts, removeToast, success, error: showError, info } = useToast()
+  const { success, error: showError, info } = useToast()
   
   // Check if user has voted and set initial state
   useEffect(() => {
@@ -309,29 +315,18 @@ export default function WeaponClient({
       {/* Header */}
       <div className="bg-gray-800 border-b border-gray-700">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => router.back()}
-                className="text-blue-400 hover:text-blue-300 transition-colors p-2 hover:bg-gray-700 rounded"
-              >
-                ←
-              </button>
-              <div className="w-px h-6 bg-gray-600"></div>
+          <Toolbar>
+            <ToolbarSection>
+              <Button variant="ghost" onClick={() => router.back()}>←</Button>
+              <div className="w-px h-6 bg-gray-600" />
               <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity cursor-pointer">
                 <span style={{ color: '#9146FF' }}>tibia</span><span style={{ color: '#53FC18' }}>vote</span>
               </Link>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => weaponData.name && window.open(`https://tibia.fandom.com/wiki/${weaponData.name.replace(/ /g, '_')}`, '_blank')}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded transition-colors text-sm"
-              >
-                🔗 Tibia Wiki
-              </button>
-            </div>
-          </div>
+            </ToolbarSection>
+            <ToolbarSection>
+              <Button variant="secondary" onClick={() => weaponData.name && window.open(`https://tibia.fandom.com/wiki/${weaponData.name.replace(/ /g, '_')}`, '_blank')}>🔗 Tibia Wiki</Button>
+            </ToolbarSection>
+          </Toolbar>
         </div>
       </div>
 
@@ -353,38 +348,30 @@ export default function WeaponClient({
               </div>
               
               <div className="flex bg-gray-700 rounded-lg p-1">
-                <button
+                <Button
+                  variant={mode === 'perks' ? 'default' : 'ghost'}
                   onClick={() => {
                     setMode('perks')
-                    // Update URL without reloading
                     const url = new URL(window.location.href)
                     url.searchParams.delete('tab')
                     router.replace(url.pathname + url.search, { scroll: false })
                   }}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    mode === 'perks'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-600'
-                  }`}
+                  className="px-4 py-2"
                 >
                   🎲 Individual Perks
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant={mode === 'builds' ? 'default' : 'ghost'}
                   onClick={() => {
                     setMode('builds')
-                    // Update URL without reloading
                     const url = new URL(window.location.href)
                     url.searchParams.set('tab', 'builds')
                     router.replace(url.pathname + url.search, { scroll: false })
                   }}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    mode === 'builds'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-600'
-                  }`}
+                  className="px-4 py-2"
                 >
                   🏗️ Community Builds
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -416,17 +403,7 @@ export default function WeaponClient({
               
               {/* Compact Action Buttons */}
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button
-                  onClick={handleSubmitVote}
-                  disabled={!allSlotsFilled || submitVoteMutation.isPending || !userSession}
-                  className={`
-                    px-6 py-2 rounded-lg font-medium transition-all duration-200 text-sm w-full sm:w-auto
-                    ${allSlotsFilled && userSession
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg disabled:opacity-50'
-                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    }
-                  `}
-                >
+                <Button onClick={handleSubmitVote} disabled={!allSlotsFilled || submitVoteMutation.isPending || !userSession} className="w-full sm:w-auto">
                   {submitVoteMutation.isPending 
                     ? '⏳ Submitting...'
                     : !userSession
@@ -435,25 +412,14 @@ export default function WeaponClient({
                         ? existingVote ? '🔄 Update Vote' : '🗳️ Submit Vote'
                         : `Fill All Slots (${selectedTiers.length}/${availableTiers.length})`
                   }
-                </button>
+                </Button>
                 
 
                 
-                <button
-                  onClick={() => setSelectedPerks([])}
-                  disabled={selectedPerks.length === 0}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors text-sm w-full sm:w-auto"
-                >
-                  🔄 Clear
-                </button>
+                <Button variant="secondary" onClick={() => setSelectedPerks([])} disabled={selectedPerks.length === 0} className="w-full sm:w-auto">🔄 Clear</Button>
                 
                 {selectedPerks.length > 0 && (
-                  <button
-                    onClick={() => setShowCreateBuild(true)}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-sm w-full sm:w-auto"
-                  >
-                    💾 Save as Build
-                  </button>
+                  <Button onClick={() => setShowCreateBuild(true)} className="w-full sm:w-auto">💾 Save as Build</Button>
                 )}
               </div>
             </div>
@@ -500,19 +466,10 @@ export default function WeaponClient({
                 <h3 className="text-lg font-semibold text-white mb-2">Create Your Own Build</h3>
                 <p className="text-gray-400 mb-4">Share your optimal perk combination with the community</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button
-                    onClick={() => setMode('perks')}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    🎲 Select Perks First
-                  </button>
-                  <button
-                    onClick={() => setShowCreateBuild(true)}
-                    disabled={selectedPerks.length === 0}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-                  >
+                  <Button onClick={() => setMode('perks')}>🎲 Select Perks First</Button>
+                  <Button onClick={() => setShowCreateBuild(true)} disabled={selectedPerks.length === 0}>
                     {selectedPerks.length > 0 ? `💾 Create Build (${selectedPerks.length} perks)` : '💾 Create Build'}
-                  </button>
+                  </Button>
                 </div>
                 {selectedPerks.length === 0 && (
                   <p className="text-sm text-gray-500 mt-2">
@@ -527,18 +484,11 @@ export default function WeaponClient({
 
       {/* Create Build Modal */}
       {showCreateBuild && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Create New Build</h2>
-                <button
-                  onClick={() => setShowCreateBuild(false)}
-                  className="text-gray-400 hover:text-white text-2xl"
-                >
-                  ×
-                </button>
-              </div>
+        <Dialog open={showCreateBuild} onOpenChange={setShowCreateBuild}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create New Build</DialogTitle>
+            </DialogHeader>
               
               {/* Selected Perks Preview */}
               <div className="mb-6">
@@ -561,55 +511,48 @@ export default function WeaponClient({
               <div className="space-y-4">
                 {/* Build Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Build Name *
-                  </label>
-                  <input
+                  <Label htmlFor="build-name">Build Name *</Label>
+                  <Input
+                    id="build-name"
                     type="text"
                     value={buildForm.name}
                     onChange={(e) => setBuildForm(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="e.g., Ice Damage Solo Hunter"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     maxLength={100}
+                    className="mt-2"
                   />
                 </div>
                 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Description (Optional)
-                  </label>
-                  <textarea
+                  <Label htmlFor="build-description">Description (Optional)</Label>
+                  <Textarea
+                    id="build-description"
                     value={buildForm.description}
                     onChange={(e) => setBuildForm(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Describe when and how to use this build..."
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-2"
                   />
                 </div>
                 
                 {/* Situation Tags */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Build Tags (Select all that apply)
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <Label>Build Tags (Select all that apply)</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
                     {Object.entries({
                       [SITUATION_TAGS.SOLO]: '👤 Solo',
                       [SITUATION_TAGS.TEAM]: '👥 Team', 
                       [SITUATION_TAGS.BOSSES]: '👹 Bossing'
                     }).map(([tag, label]) => (
-                      <button
+                      <Button
                         key={tag}
                         onClick={() => toggleSituationTag(tag)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          buildForm.situationTags.includes(tag)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
+                        variant={buildForm.situationTags.includes(tag) ? 'default' : 'secondary'}
+                        className="justify-start"
                       >
                         {label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -617,36 +560,16 @@ export default function WeaponClient({
               
               {/* Action Buttons */}
               <div className="flex gap-3 mt-6 pt-6 border-t border-gray-700">
-                <button
-                  onClick={() => setShowCreateBuild(false)}
-                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateBuild}
-                  disabled={!buildForm.name.trim() || createBuildMutation.isPending}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-                >
+                <Button variant="secondary" className="flex-1" onClick={() => setShowCreateBuild(false)}>Cancel</Button>
+                <Button className="flex-1" onClick={handleCreateBuild} disabled={!buildForm.name.trim() || createBuildMutation.isPending}>
                   {createBuildMutation.isPending ? '⏳ Creating...' : '🎉 Create Build'}
-                </button>
+                </Button>
               </div>
-            </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
 
-      {/* Toast Notifications */}
-      <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      {/* Toasts handled globally by <AppToaster /> in layout */}
     </div>
   )
 }

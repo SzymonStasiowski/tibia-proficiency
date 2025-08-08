@@ -2,11 +2,16 @@
 
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import Image from 'next/image'
 import { useState, useMemo } from 'react'
 import { useWeaponsByCategory, useWeaponCategories } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
 import { useDebounce } from '@/hooks/useDebounce'
+import { Toolbar, ToolbarSection } from '@/components/ui/toolbar'
 
 interface CategoryItem {
   id: string
@@ -132,31 +137,32 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="text-6xl mb-4">{style.icon}</div>
-          <h1 className={`text-4xl font-bold mb-4 ${style.textColor}`}>
-            {category.name}
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-6">
-            {category.weaponCount} weapons available
-          </p>
-          <Link 
-            href="/"
-            className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-sm font-medium transition-colors"
-          >
-            ← Back to Categories
-          </Link>
+        <div className="mb-12">
+          <Toolbar>
+            <ToolbarSection>
+              <div className="text-5xl md:text-6xl">{style.icon}</div>
+              <div>
+                <h1 className={`text-3xl md:text-4xl font-bold ${style.textColor}`}>{category.name}</h1>
+                <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">{category.weaponCount} weapons available</p>
+              </div>
+            </ToolbarSection>
+            <ToolbarSection>
+              <Button asChild className="rounded-full">
+                <Link href="/">← Back to Categories</Link>
+              </Button>
+            </ToolbarSection>
+          </Toolbar>
         </div>
 
         {/* Search Filter */}
         <div className="mb-8 max-w-md mx-auto">
           <div className="relative">
-            <input
+            <Input
               type="text"
               placeholder="Search weapons..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="pr-10"
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,17 +182,17 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
         {/* Weapons Grid */}
         {isLoadingWeapons ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <Skeleton className="h-12 w-12 mx-auto rounded-full" />
             <p className="text-gray-600 mt-4">Loading weapons...</p>
           </div>
         ) : weaponsError ? (
           <div className="text-center py-12">
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-8 max-w-md mx-auto">
-              <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">Failed to load weapons</h3>
-              <p className="text-sm text-red-600 dark:text-red-400">
+            <Card className="p-8 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-red-300 mb-2">Failed to load weapons</h3>
+              <p className="text-sm text-red-400">
                 {weaponsError.message || 'An error occurred while loading weapons'}
               </p>
-            </div>
+            </Card>
           </div>
         ) : (weaponsData && weaponsData.length > 0) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -249,12 +255,12 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 max-w-md mx-auto">
-              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">No weapons found</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <Card className="p-8 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-gray-300 mb-2">No weapons found</h3>
+              <p className="text-sm text-gray-400">
                 No weapons are available in this category yet.
               </p>
-            </div>
+            </Card>
           </div>
         )}
       </div>

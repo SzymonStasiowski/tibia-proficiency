@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 // Removed unused Link import
 import { useRouter } from 'next/navigation'
+import { Input } from '@/components/ui/input'
+import { Card } from '@/components/ui/card'
 import Image from 'next/image'
 import { useAllWeapons } from '@/hooks'
 import { weaponNameToSlug } from '@/lib/utils'
@@ -106,7 +108,7 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
     <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
       {/* Weapon Select Input */}
       <div className="relative">
-        <input
+        <Input
           ref={inputRef}
           type="text"
           placeholder={placeholder || "Select a weapon... (e.g., 'Cobra Rod', 'Falcon Battleaxe')"}
@@ -114,7 +116,7 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
-          className="w-full px-6 py-4 pr-12 text-lg rounded-full border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="px-6 py-4 pr-12 text-lg rounded-full border-2 shadow-lg"
         />
         {/* Dropdown Arrow */}
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -131,7 +133,7 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
 
       {/* Dropdown Results */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+        <Card className="absolute top-full left-0 right-0 mt-2 z-50 max-h-96 overflow-y-auto">
           {filteredWeapons.length > 0 ? (
             <>
               {filteredWeapons.map((weapon, index) => (
@@ -181,7 +183,7 @@ export default function WeaponSelect({ onWeaponSelect, placeholder }: WeaponSele
               {query.trim() ? 'No weapons found' : 'Loading weapons...'}
             </div>
           )}
-        </div>
+        </Card>
       )}
     </div>
   )
