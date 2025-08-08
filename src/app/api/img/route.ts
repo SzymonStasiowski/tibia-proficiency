@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 
 const ALLOWED_HOSTS = new Set<string>([
   'static.wikia.nocookie.net',
+  'static.wikia.nocookie.net.cdn.cloudflare.net',
+  'static.wikia.nocookie.net.cdnfastly.net',
 ])
 
 export async function GET(request: NextRequest) {
@@ -21,7 +23,8 @@ export async function GET(request: NextRequest) {
     return new Response('Only https is allowed', { status: 400 })
   }
 
-  if (!ALLOWED_HOSTS.has(target.hostname)) {
+  // Allow both CDN and site hostnames the wiki uses for serving assets
+  if (!ALLOWED_HOSTS.has(target.hostname) && !target.hostname.endsWith('.fandom.com')) {
     return new Response('Host not allowed', { status: 403 })
   }
 
@@ -30,7 +33,9 @@ export async function GET(request: NextRequest) {
       // Important: avoid sending cookies, and add a permissive referer like the host root
       headers: {
         'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-        'Referer': `https://${target.hostname}/`,
+        // Fandom/Wikia often require a fandom referer/origin, not the static CDN host
+        'Referer': 'https://tibia.fandom.com/',
+        'Origin': 'https://tibia.fandom.com',
         'User-Agent': 'Mozilla/5.0 (compatible; TibiaVoteBot/1.0; +https://tibiavote.vercel.app)'
       },
       cache: 'force-cache',
@@ -44,6 +49,10 @@ export async function GET(request: NextRequest) {
     }
 
     const contentType = upstream.headers.get('content-type') || 'image/png'
+    // If upstream did not return an image, propagate status for easier debugging
+    if (!contentType.startsWith('image/')) {
+      return new Response('Upstream is not an image', { status: upstream.status || 502 })
+    }
     const res = new Response(upstream.body, {
       status: 200,
       headers: {
