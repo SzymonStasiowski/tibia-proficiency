@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    // Disable Next/Image optimization globally; we load remote images from multiple sources
+    // and explicitly control sizing in components.
+    unoptimized: true,
+  },
   /* config options here */
   async headers() {
     return [
@@ -34,7 +39,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: https:",
+              "img-src 'self' data: https: blob:",
               "connect-src 'self' https://*.supabase.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
