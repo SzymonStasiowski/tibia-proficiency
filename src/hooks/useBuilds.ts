@@ -89,7 +89,19 @@ export function usePopularBuilds(limit: number = 10, initialData?: PopularBuild[
         .limit(limit)
       
       if (error) throw error
-      return data || []
+      const builds = (data || []) as PopularBuild[]
+
+      // Enrich with weapon media by querying weapons table
+      const weaponIds = Array.from(new Set(builds.map(b => b.weapon_id)))
+      if (weaponIds.length === 0) return builds
+      const { data: weapons } = await supabase
+        .from('weapons')
+        .select('id, image_url, image_media_id, media:media(*)')
+        .in('id', weaponIds)
+      const idToMedia: Record<string, any> = {}
+      ;(weapons || []).forEach(w => { idToMedia[w.id] = (w as any).media || null })
+
+      return builds.map(b => ({ ...b, media: idToMedia[b.weapon_id] || null })) as any
     },
     initialData,
   })
