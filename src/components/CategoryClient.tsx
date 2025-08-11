@@ -220,7 +220,7 @@ export default function CategoryClient({ initialWeapons, initialCategories }: Ca
                     )}
                   <div className="text-center">
                     {(() => {
-                      const raw = getImageFromRecord({ media: (weapon as any).media || null, legacyUrl: weapon.image_url || undefined })
+                      const raw = getImageFromRecord({ media: (weapon as any).media || null, legacyUrl: null })
                       const url = asDisplayUrl(raw)
                       return url ? (
                         <Image

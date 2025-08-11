@@ -61,6 +61,9 @@ export default function MostVotedBuilds({ builds }: MostVotedBuildsProps) {
                 description: p.description || '',
                 main_icon_url: p.main_icon_url || '',
                 type_icon_url: p.type_icon_url || undefined,
+                // Pass through media so UI uses Supabase storage instead of placeholders
+                main_media: (p as any).main_media || null,
+                type_media: (p as any).type_media || null,
               }))}
               showRank={index + 1}
               hideVoting={true}

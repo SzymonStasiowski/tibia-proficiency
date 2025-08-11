@@ -18,10 +18,9 @@ export function getImageFromRecord(params: {
   legacyUrl?: string | null
 }): string | null {
   const { media, legacyUrl } = params
-  if (media?.storage_path) {
-    return getPublicUrl(media.storage_path)
-  }
-  return legacyUrl || null
+  if (media?.storage_path) return getPublicUrl(media.storage_path)
+  // No more legacy fallback: enforce first-party only
+  return null
 }
 
 export type MediaKind = 'weapon' | 'perk-main' | 'perk-type'
@@ -47,12 +46,15 @@ export function asDisplayUrl(url: string | null): string | null {
   if (!url) return null
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supaPrefix = baseUrl ? `${baseUrl}/storage/v1/object/public/` : null
-  if (supaPrefix && url.startsWith(supaPrefix)) {
-    return url
-  }
+  if (supaPrefix && url.startsWith(supaPrefix)) return url
   // If it looks like a Supabase public URL but baseUrl differs (e.g., region alias), allow direct
   if (url.includes('/storage/v1/object/public/')) return url
-  return `/api/img?url=${encodeURIComponent(url)}`
+  // If it looks like a media id (uuid), support internal canonical route
+  if (/^[0-9a-fA-F-]{36}$/.test(url)) {
+    return `/api/image/${url}`
+  }
+  // Enforce first-party only: do not proxy external URLs
+  return null
 }
 
 

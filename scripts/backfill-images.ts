@@ -49,7 +49,7 @@ function loadEnvFile(path: string) {
 loadEnvFile(resolve(process.cwd(), '.env.local'))
 loadEnvFile(resolve(process.cwd(), '.env'))
 
-function parseArgs(): { table: TableKind; concurrency: number; limit: number; resume: boolean; delayMs: number } {
+function parseArgs(): { table: TableKind; concurrency: number; limit: number; resume: boolean; delayMs: number; perkId?: string } {
   const args = process.argv.slice(2)
   const get = (flag: string) => {
     const idx = args.indexOf(flag)
@@ -61,10 +61,11 @@ function parseArgs(): { table: TableKind; concurrency: number; limit: number; re
   const limit = Number(get('--limit') || DEFAULT_LIMIT)
   const resume = has('--resume')
   const delayMs = Number(get('--delayMs') || DEFAULT_DELAY_MS)
+  const perkId = get('--perkId')
   if (!['weapons', 'perks'].includes(table)) {
     throw new Error('--table must be weapons or perks')
   }
-  return { table: table as TableKind, concurrency, limit, resume, delayMs }
+  return { table: table as TableKind, concurrency, limit, resume, delayMs, perkId }
 }
 
 function getPublicUrlFromPath(storagePath: string): string {
@@ -154,7 +155,7 @@ function buildPath(kind: MediaKind, shaHex: string, ext: string, slugOrId?: stri
 }
 
 async function main() {
-  const { table, concurrency, limit, resume, delayMs } = parseArgs()
+  const { table, concurrency, limit, resume, delayMs, perkId } = parseArgs()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!supabaseUrl || !serviceKey) throw new Error('Missing Supabase env')
@@ -187,36 +188,395 @@ async function main() {
     })
   } else {
     // perks
-    const { data, error } = await admin
+    let perksQuery = admin
       .from('perks')
       .select('id,name,main_icon_url,type_icon_url,main_media_id,type_media_id,weapon_id')
-      .limit(limit)
+    if (perkId) {
+      perksQuery = perksQuery.eq('id', perkId)
+    } else {
+      perksQuery = perksQuery.limit(limit)
+    }
+    const { data, error } = await perksQuery
     if (error) throw error
     const items = (data || []) as PerkRow[]
     await runQueue(items, concurrency, delayMs, async (row) => {
       if (checkpoint.processedIds[row.id]) return
       // main
       if (!row.main_media_id && row.main_icon_url) {
-        await runWithRetry(async () => {
-          await processOne(admin, row.main_icon_url!, 'perk-main', undefined, 'Tibia Wiki (Fandom)', async (mediaId) => {
-            await admin.from('perks').update({ main_media_id: mediaId }).eq('id', row.id)
+        try {
+          await runWithRetry(async () => {
+            await processOne(admin, row.main_icon_url!, 'perk-main', undefined, 'Tibia Wiki (Fandom)', async (mediaId) => {
+              await admin.from('perks').update({ main_media_id: mediaId }).eq('id', row.id)
+            })
           })
-        })
+        } catch (e) {
+          console.error('Failed to process main icon for perk', row.id, row.name, e)
+        }
       }
       // type
       if (!row.type_media_id && row.type_icon_url) {
-        await runWithRetry(async () => {
-          await processOne(admin, row.type_icon_url!, 'perk-type', undefined, 'Tibia Wiki (Fandom)', async (mediaId) => {
-            await admin.from('perks').update({ type_media_id: mediaId }).eq('id', row.id)
+        try {
+          await runWithRetry(async () => {
+            await processOne(admin, row.type_icon_url!, 'perk-type', undefined, 'Tibia Wiki (Fandom)', async (mediaId) => {
+              await admin.from('perks').update({ type_media_id: mediaId }).eq('id', row.id)
+            })
           })
-        })
+        } catch (e) {
+          console.error('Failed to process type icon for perk', row.id, row.name, e)
+        }
       }
       checkpoint.processedIds[row.id] = true
       saveCheckpoint(checkpoint)
     })
+
+    // Strong remediation: for any remaining rows, fetch & upload (dedupe by sha) ignoring checkpoint
+    await fillPerksByFetchUpload(admin, Math.max(2, Math.min(8, concurrency)), delayMs)
+
+    // Propagate media IDs to other perks with the same name (shared icons)
+    await propagatePerkMediaByName(admin)
+    // Link perks by exact source_url if a media row already exists
+    await linkPerksBySourceUrl(admin)
+    // Finally, link perks by content hash of their legacy URL (dedupe across variant URLs)
+    await linkPerksByHash(admin, Math.max(2, Math.min(10, concurrency)), delayMs)
+    // Heuristic: link by filename (e.g., Sanguine_Coil.gif) to catch URL variants with same basename
+    await linkPerksByFilename(admin)
+    // Map by normalized fandom URL (basename + crop params) using already-linked rows
+    await linkPerksByNormalizedUrl(admin)
+    // Map by normalized key derived directly from media.source_url
+    await linkPerksByNormalizedUrlFromMedia(admin)
   }
 
   console.log('Backfill completed')
+}
+
+async function propagatePerkMediaByName(admin: SupabaseClient<Database>) {
+  // Build lookup of name -> main_media_id and name -> type_media_id from rows that have them
+  const { data: rows, error } = await admin
+    .from('perks')
+    .select('id,name,main_media_id,type_media_id')
+  if (error) throw error
+  const nameToMain: Record<string, string> = {}
+  const nameToType: Record<string, string> = {}
+  for (const r of rows || []) {
+    if ((r as any).main_media_id && !nameToMain[(r as any).name]) nameToMain[(r as any).name] = (r as any).main_media_id
+    if ((r as any).type_media_id && !nameToType[(r as any).name]) nameToType[(r as any).name] = (r as any).type_media_id
+  }
+  // Batch-update missing FKs by name
+  const toUpdateMain = (rows || []).filter((r) => !(r as any).main_media_id && nameToMain[(r as any).name])
+  const toUpdateType = (rows || []).filter((r) => !(r as any).type_media_id && nameToType[(r as any).name])
+  // Chunk updates to avoid large payloads
+  const chunk = async <T>(arr: T[], size: number, fn: (part: T[]) => Promise<void>) => {
+    for (let i = 0; i < arr.length; i += size) {
+      await fn(arr.slice(i, i + size))
+    }
+  }
+  // Update individually with modest concurrency to set the correct FK per row
+  const updateOneMain = async (r: any) => {
+    const id = r.id as string
+    const mediaId = nameToMain[r.name] as string
+    if (!id || !mediaId) return
+    await admin.from('perks').update({ main_media_id: mediaId }).eq('id', id)
+  }
+  const updateOneType = async (r: any) => {
+    const id = r.id as string
+    const mediaId = nameToType[r.name] as string
+    if (!id || !mediaId) return
+    await admin.from('perks').update({ type_media_id: mediaId }).eq('id', id)
+  }
+
+  // Reuse runQueue with low concurrency
+  await runQueue(toUpdateMain as any[], 8, 0, updateOneMain)
+  await runQueue(toUpdateType as any[], 8, 0, updateOneType)
+}
+
+async function linkPerksBySourceUrl(admin: SupabaseClient<Database>) {
+  // Fetch perks missing FKs but having legacy URLs
+  const { data: rows, error } = await admin
+    .from('perks')
+    .select('id, name, main_icon_url, type_icon_url, main_media_id, type_media_id')
+  if (error) throw error
+  const candidates = (rows || []) as any[]
+
+  // Helper to link one side
+  const linkOne = async (r: any, side: 'main' | 'type') => {
+    const has = side === 'main' ? r.main_media_id : r.type_media_id
+    const url: string | null = side === 'main' ? r.main_icon_url : r.type_icon_url
+    if (has || !url) return
+    const { data: m } = await admin.from('media').select('id').eq('source_url', url).maybeSingle()
+    if (m?.id) {
+      if (side === 'main') {
+        await admin.from('perks').update({ main_media_id: m.id }).eq('id', r.id)
+      } else {
+        await admin.from('perks').update({ type_media_id: m.id }).eq('id', r.id)
+      }
+    }
+  }
+
+  // Run with modest concurrency
+  await runQueue(candidates, 10, 0, async (r) => {
+    await linkOne(r, 'main')
+    await linkOne(r, 'type')
+  })
+}
+
+async function linkPerksByHash(
+  admin: SupabaseClient<Database>,
+  concurrency: number,
+  delayMs: number
+) {
+  // Fetch candidates missing FKs but with legacy URLs
+  const { data: rows, error } = await admin
+    .from('perks')
+    .select('id, name, main_icon_url, type_icon_url, main_media_id, type_media_id')
+  if (error) throw error
+
+  const candidates = (rows || []).filter((r: any) => (!r.main_media_id && r.main_icon_url) || (!r.type_media_id && r.type_icon_url)) as any[]
+
+  // Cache url -> mediaId to avoid re-fetching/re-hashing duplicates
+  const urlToMediaId: Record<string, string | null> = {}
+
+  const resolveUrlToMediaId = async (url: string, side: 'main' | 'type'): Promise<string | null> => {
+    if (urlToMediaId.hasOwnProperty(url)) return urlToMediaId[url]!
+    // Fetch and hash
+    const { buffer } = await fetchAsBuffer(url)
+    const hash = crypto.createHash('sha256').update(buffer).digest('hex')
+    const { data: m } = await admin
+      .from('media')
+      .select('id, storage_path')
+      .eq('sha256', `\\x${hash}`)
+      .maybeSingle()
+    let id: string | null = null
+    if (m?.id && m.storage_path) {
+      const ok = side === 'main' ? m.storage_path.startsWith('perks/main/') : m.storage_path.startsWith('perks/type/')
+      id = ok ? m.id : null
+    }
+    urlToMediaId[url] = id
+    return id
+  }
+
+  await runQueue(candidates, concurrency, delayMs, async (r) => {
+    // main
+    if (!r.main_media_id && r.main_icon_url) {
+      try {
+        const mediaId = await runWithRetry(() => resolveUrlToMediaId(r.main_icon_url, 'main'))
+        if (mediaId) {
+          await admin.from('perks').update({ main_media_id: mediaId }).eq('id', r.id)
+        }
+      } catch (e) {
+        // ignore a single failure; continue
+      }
+    }
+    // type
+    if (!r.type_media_id && r.type_icon_url) {
+      try {
+        const mediaId = await runWithRetry(() => resolveUrlToMediaId(r.type_icon_url, 'type'))
+        if (mediaId) {
+          await admin.from('perks').update({ type_media_id: mediaId }).eq('id', r.id)
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  })
+}
+
+async function fillPerksByFetchUpload(
+  admin: SupabaseClient<Database>,
+  concurrency: number,
+  delayMs: number
+) {
+  const { data: rows, error } = await admin
+    .from('perks')
+    .select('id, name, main_icon_url, type_icon_url, main_media_id, type_media_id')
+  if (error) throw error
+  const candidates = (rows || []).filter((r: any) => (!r.main_media_id && r.main_icon_url) || (!r.type_media_id && r.type_icon_url)) as any[]
+  await runQueue(candidates, concurrency, delayMs, async (r) => {
+    if (!r.main_media_id && r.main_icon_url) {
+      try {
+        await runWithRetry(async () => {
+          await processOne(admin, r.main_icon_url!, 'perk-main', undefined, 'Tibia Wiki (Fandom)', async (mediaId) => {
+            await admin.from('perks').update({ main_media_id: mediaId }).eq('id', r.id)
+          })
+        })
+      } catch {}
+    }
+    if (!r.type_media_id && r.type_icon_url) {
+      try {
+        await runWithRetry(async () => {
+          await processOne(admin, r.type_icon_url!, 'perk-type', undefined, 'Tibia Wiki (Fandom)', async (mediaId) => {
+            await admin.from('perks').update({ type_media_id: mediaId }).eq('id', r.id)
+          })
+        })
+      } catch {}
+    }
+  })
+}
+
+function extractFilename(url: string | null): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const parts = u.pathname.split('/')
+    // Fandom paths often are /images/a/ab/Filename.ext/...
+    // Grab the segment that looks like it has a dot extension
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const seg = parts[i]
+      if (seg.includes('.') && seg.length > 1) return seg.toLowerCase()
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+async function linkPerksByFilename(admin: SupabaseClient<Database>) {
+  // Build filename -> mediaId map from media rows that have source_url
+  const { data: mediaRows, error: mediaErr } = await admin
+    .from('media')
+    .select('id, source_url, storage_path')
+    .not('source_url', 'is', null)
+  if (mediaErr) throw mediaErr
+  const mainFilenameToMedia: Record<string, string> = {}
+  const typeFilenameToMedia: Record<string, string> = {}
+  for (const m of mediaRows || []) {
+    const fn = extractFilename((m as any).source_url as string | null)
+    const sp = (m as any).storage_path as string | undefined
+    if (!fn || !sp) continue
+    if (sp.startsWith('perks/main/') && !mainFilenameToMedia[fn]) mainFilenameToMedia[fn] = (m as any).id
+    if (sp.startsWith('perks/type/') && !typeFilenameToMedia[fn]) typeFilenameToMedia[fn] = (m as any).id
+  }
+
+  // Fetch perks missing FKs
+  const { data: perks, error: perksErr } = await admin
+    .from('perks')
+    .select('id, name, main_icon_url, type_icon_url, main_media_id, type_media_id')
+  if (perksErr) throw perksErr
+
+  const candidates = (perks || []) as any[]
+
+  await runQueue(candidates, 10, 0, async (r) => {
+    if (!r.main_media_id) {
+      const fn = extractFilename(r.main_icon_url)
+      const mediaId = fn ? mainFilenameToMedia[fn] : undefined
+      if (mediaId) {
+        await admin.from('perks').update({ main_media_id: mediaId }).eq('id', r.id)
+      }
+    }
+    if (!r.type_media_id) {
+      const fn = extractFilename(r.type_icon_url)
+      const mediaId = fn ? typeFilenameToMedia[fn] : undefined
+      if (mediaId) {
+        await admin.from('perks').update({ type_media_id: mediaId }).eq('id', r.id)
+      }
+    }
+  })
+}
+
+function normalizeFandomKey(url: string | null): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const parts = u.pathname.split('/')
+    // Find basename like Weapon_Proficiency_-_General.png
+    let basename: string | null = null
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const seg = parts[i]
+      if (seg.includes('.') && seg.length > 1) { basename = seg.toLowerCase(); break }
+    }
+    if (!basename) return null
+    // Extract crop params from path segments when present
+    const getVal = (key: string): string | null => {
+      const idx = parts.indexOf(key)
+      if (idx >= 0 && idx + 1 < parts.length) return parts[idx + 1]
+      return null
+    }
+    const width = getVal('width')
+    const xoff = getVal('x-offset')
+    const yoff = getVal('y-offset')
+    const wwin = getVal('window-width')
+    const whei = getVal('window-height')
+    const cropKey = width || xoff || yoff || wwin || whei
+      ? `|w:${width||''}|x:${xoff||''}|y:${yoff||''}|ww:${wwin||''}|wh:${whei||''}`
+      : ''
+    return `${basename}${cropKey}`
+  } catch {
+    return null
+  }
+}
+
+async function linkPerksByNormalizedUrl(admin: SupabaseClient<Database>) {
+  // Build normalization maps from already-linked perks
+  const { data: rows, error } = await admin
+    .from('perks')
+    .select('id,name,main_icon_url,type_icon_url,main_media_id,type_media_id')
+  if (error) throw error
+  const mainMap: Record<string, string> = {}
+  const typeMap: Record<string, string> = {}
+  for (const r of rows || []) {
+    const rr: any = r
+    if (rr.main_media_id && rr.main_icon_url) {
+      const k = normalizeFandomKey(rr.main_icon_url)
+      if (k && !mainMap[k]) mainMap[k] = rr.main_media_id
+    }
+    if (rr.type_media_id && rr.type_icon_url) {
+      const k = normalizeFandomKey(rr.type_icon_url)
+      if (k && !typeMap[k]) typeMap[k] = rr.type_media_id
+    }
+  }
+
+  // Link missing rows by normalized key
+  const missing = (rows || []).filter((r: any) => (!r.main_media_id && r.main_icon_url) || (!r.type_media_id && r.type_icon_url)) as any[]
+  await runQueue(missing, 12, 0, async (r) => {
+    if (!r.main_media_id && r.main_icon_url) {
+      const k = normalizeFandomKey(r.main_icon_url)
+      const id = k ? mainMap[k] : undefined
+      if (id) await admin.from('perks').update({ main_media_id: id }).eq('id', r.id)
+    }
+    if (!r.type_media_id && r.type_icon_url) {
+      const k = normalizeFandomKey(r.type_icon_url)
+      const id = k ? typeMap[k] : undefined
+      if (id) await admin.from('perks').update({ type_media_id: id }).eq('id', r.id)
+    }
+  })
+}
+
+async function linkPerksByNormalizedUrlFromMedia(admin: SupabaseClient<Database>) {
+  // Build key -> mediaId from ALL media rows with a source_url
+  const { data: mediaRows, error: mediaErr } = await admin
+    .from('media')
+    .select('id, source_url, storage_path')
+    .not('source_url', 'is', null)
+  if (mediaErr) throw mediaErr
+
+  const mainKeyToMedia: Record<string, string> = {}
+  const typeKeyToMedia: Record<string, string> = {}
+  for (const m of mediaRows || []) {
+    const key = normalizeFandomKey((m as any).source_url as string)
+    const sp = (m as any).storage_path as string | undefined
+    if (!key || !sp) continue
+    if (sp.startsWith('perks/main/') && !mainKeyToMedia[key]) mainKeyToMedia[key] = (m as any).id
+    if (sp.startsWith('perks/type/') && !typeKeyToMedia[key]) typeKeyToMedia[key] = (m as any).id
+  }
+
+  // Fetch perks missing FKs
+  const { data: perks, error: perksErr } = await admin
+    .from('perks')
+    .select('id, main_icon_url, type_icon_url, main_media_id, type_media_id')
+  if (perksErr) throw perksErr
+
+  const rows = (perks || []) as any[]
+  await runQueue(rows, 16, 0, async (r) => {
+    if (!r.main_media_id && r.main_icon_url) {
+      const k = normalizeFandomKey(r.main_icon_url)
+      const id = k ? mainKeyToMedia[k] : undefined
+      if (id) await admin.from('perks').update({ main_media_id: id }).eq('id', r.id)
+    }
+    if (!r.type_media_id && r.type_icon_url) {
+      const k = normalizeFandomKey(r.type_icon_url)
+      const id = k ? typeKeyToMedia[k] : undefined
+      if (id) await admin.from('perks').update({ type_media_id: id }).eq('id', r.id)
+    }
+  })
 }
 
 async function processOne(

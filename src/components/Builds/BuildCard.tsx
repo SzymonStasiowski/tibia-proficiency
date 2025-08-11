@@ -13,7 +13,15 @@ import { Button } from '@/components/ui/button'
 
 interface BuildCardProps {
   build: PopularBuild | (Build & { weapon_name?: string; weapon_image_url?: string })
-  perks?: { id: string; name: string; description: string; main_icon_url: string; type_icon_url?: string }[]
+  perks?: {
+    id: string
+    name: string
+    description: string
+    main_icon_url: string
+    type_icon_url?: string
+    main_media?: { id: string; storage_path: string } | null
+    type_media?: { id: string; storage_path: string } | null
+  }[]
   onVote?: (buildId: string) => void
   userBuildVotes?: string[]
   votingBuildId?: string | null
@@ -22,6 +30,7 @@ interface BuildCardProps {
   weaponData?: {
     name: string
     image_url?: string
+    media?: { id: string; storage_path: string } | null
   }
 }
 
@@ -124,7 +133,7 @@ export default function BuildCard({
                 onClick={handleWeaponClick}
               >
                 {(() => {
-                  const raw = getImageFromRecord({ media: (build as any).media || null, legacyUrl: weaponImageUrl })
+                  const raw = getImageFromRecord({ media: (weaponData as any)?.media || (build as any).media || null, legacyUrl: null })
                   const url = asDisplayUrl(raw)
                   return url ? (
                     <Image
@@ -235,7 +244,7 @@ export default function BuildCard({
                   onClick={handleWeaponClick}
                 >
                   {(() => {
-                    const raw = getImageFromRecord({ media: (build as any).media || null, legacyUrl: weaponImageUrl })
+                    const raw = getImageFromRecord({ media: (weaponData as any)?.media || (build as any).media || null, legacyUrl: null })
                     const url = asDisplayUrl(raw)
                     return url ? (
                       <Image

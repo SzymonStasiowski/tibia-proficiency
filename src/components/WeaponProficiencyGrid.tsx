@@ -2,6 +2,7 @@ import { Weapon } from '@/hooks/useWeapons'
 import { Perk as DatabasePerk } from '@/hooks/usePerks'
 // Removed legacy PerkSlot (mockData-based)
 import PerkIcon from './PerkIcon'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import SmartTooltip from './SmartTooltip'
 import { useState, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -45,11 +46,11 @@ function DatabasePerkSlot({ perk, isSelected = false, onClick, percentage = 0, s
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >
-          {/* Main Icon with Fallback */}
+          {/* Main Icon with Fallback - prefer stored media only */}
           <PerkIcon
-            iconUrl={perk.main_icon_url || ''}
+            iconUrl={getImageFromRecord({ media: (perk as any).main_media || null, legacyUrl: null }) || ''}
             altText={perk.name}
-            overlayIcon={perk.type_icon_url}
+            overlayIcon={getImageFromRecord({ media: (perk as any).type_media || null, legacyUrl: null }) || undefined}
           />
           
           {/* Percentage Overlay */}
@@ -86,9 +87,9 @@ function MobilePerkOption({ perk, isSelected = false, onClick, percentage = 0, s
       {/* Perk Icon */}
       <div className={`flex-shrink-0 ${isSelected ? '' : 'grayscale'}`}>
         <PerkIcon
-          iconUrl={perk.main_icon_url || ''}
+          iconUrl={getImageFromRecord({ media: (perk as any).main_media || null, legacyUrl: null }) || ''}
           altText={perk.name}
-          overlayIcon={perk.type_icon_url}
+          overlayIcon={getImageFromRecord({ media: (perk as any).type_media || null, legacyUrl: null }) || undefined}
           size="large"
         />
       </div>
@@ -175,7 +176,7 @@ export default function WeaponProficiencyGrid({
         <Toolbar>
           <ToolbarSection>
             <PerkIcon
-              iconUrl={weapon.image_url || ''}
+              iconUrl={getImageFromRecord({ media: (weapon as any).media || null, legacyUrl: null }) || ''}
               altText={weapon.name}
               className="p-1"
             />

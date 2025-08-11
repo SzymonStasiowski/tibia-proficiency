@@ -22,7 +22,7 @@ interface CreatorVote {
   weapons: {
     id: string
     name: string
-    image_url: string | null
+    media?: { id: string; storage_path: string } | null
     weapon_type: string | null
     vocation: string | null
   }
@@ -258,7 +258,7 @@ export default function CreatorProfileClient({
                   {/* Weapon Image */}
                   <div className="flex items-center justify-center">
                     {(() => {
-                      const raw = getImageFromRecord({ media: undefined as any, legacyUrl: vote.weapons.image_url })
+                      const raw = getImageFromRecord({ media: (vote.weapons as any).media || null, legacyUrl: null })
                       const url = asDisplayUrl(raw)
                       return url ? (
                         <Image

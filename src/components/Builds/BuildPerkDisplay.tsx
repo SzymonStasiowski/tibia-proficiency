@@ -43,9 +43,9 @@ function SmallPerkSlot({ perk }: SmallPerkSlotProps) {
         onMouseLeave={() => setShowTooltip(false)}
       >
         <PerkIcon
-          iconUrl={asDisplayUrl(getImageFromRecord({ media: perk.main_media || undefined, legacyUrl: perk.main_icon_url })) || ''}
+          iconUrl={getImageFromRecord({ media: perk.main_media || undefined, legacyUrl: null }) || ''}
           altText={perk.name}
-          overlayIcon={asDisplayUrl(getImageFromRecord({ media: perk.type_media || undefined, legacyUrl: perk.type_icon_url || null })) || undefined}
+          overlayIcon={getImageFromRecord({ media: perk.type_media || undefined, legacyUrl: null }) || undefined}
           size="medium"
         />
       </div>
