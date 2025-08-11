@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase, Tables } from '@/lib/supabase'
 
-export type Perk = Tables<'perks'>
+export type Perk = Tables<'perks'> & {
+  main_media?: { id: string; storage_path: string } | null
+  type_media?: { id: string; storage_path: string } | null
+}
 
 // Query Keys
 export const perkKeys = {
@@ -18,7 +21,7 @@ export function useWeaponPerks(weaponId: string, initialData?: Perk[]) {
     queryFn: async (): Promise<Perk[]> => {
       const { data, error } = await supabase
         .from('perks')
-        .select('*')
+        .select('*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*)')
         .eq('weapon_id', weaponId)
         .order('tier_level')
       
@@ -38,7 +41,7 @@ export function useAllPerks() {
     queryFn: async (): Promise<Perk[]> => {
       const { data, error } = await supabase
         .from('perks')
-        .select('*')
+        .select('*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*)')
         .order('name')
       
       if (error) throw error
@@ -55,7 +58,7 @@ export function useWeaponPerksByTier(weaponId: string) {
     queryFn: async (): Promise<Record<number, Perk[]>> => {
       const { data, error } = await supabase
         .from('perks')
-        .select('*')
+        .select('*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*)')
         .eq('weapon_id', weaponId)
         .order('tier_level')
       

@@ -6,6 +6,9 @@ import Image from 'next/image'
 import { useCreatorByToken } from '@/hooks/useCreators'
 import { weaponNameToSlug } from '@/lib/utils'
 import { useToast } from '@/hooks'
+import { Button } from '@/components/ui/button'
+import { Toolbar, ToolbarSection } from '@/components/ui/toolbar'
+import { Card } from '@/components/ui/card'
 import WeaponSelect from '@/components/WeaponSelect'
 import WeaponClient from '@/components/WeaponClient'
 
@@ -34,12 +37,7 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
               <p className="text-red-600 dark:text-red-300 mb-6">
                 This creator voting link is invalid or has expired. Please contact the administrator for a new link.
               </p>
-              <button
-                onClick={() => router.push('/')}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
-              >
-                Go to Homepage
-              </button>
+              <Button onClick={() => router.push('/')}>Go to Homepage</Button>
             </div>
           </div>
         </div>
@@ -75,36 +73,33 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Creator Header */}
         <div className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                {creator?.avatar_url && (
-                  <Image
-                    src={creator?.avatar_url}
-                    alt={creator?.channel_name || 'Creator avatar'}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 rounded-full border-2 border-yellow-400"
-                    unoptimized
-                  />
-                )}
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                    🎮 {creator?.channel_name} - Creator Voting
-                  </h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Your votes will be featured as &quot;Creator&apos;s Choice&quot;
-                  </p>
-                </div>
+        <div className="container mx-auto px-4 py-4">
+          <Toolbar>
+            <ToolbarSection>
+              {creator?.avatar_url && (
+                <Image
+                  src={creator?.avatar_url}
+                  alt={creator?.channel_name || 'Creator avatar'}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full border-2 border-yellow-400"
+                  unoptimized
+                />
+              )}
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  🎮 {creator?.channel_name} - Creator Voting
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Your votes will be featured as &quot;Creator&apos;s Choice&quot;
+                </p>
               </div>
-              <button
-                onClick={handleBackToWeaponSelect}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors"
-              >
-                ← Change Weapon
-              </button>
-            </div>
-          </div>
+            </ToolbarSection>
+            <ToolbarSection>
+              <Button variant="secondary" onClick={handleBackToWeaponSelect}>← Change Weapon</Button>
+            </ToolbarSection>
+          </Toolbar>
+        </div>
         </div>
 
         {/* Weapon Voting Interface */}
@@ -144,7 +139,7 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
             </div>
           </div>
           
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 max-w-3xl mx-auto mb-8">
+          <Card className="border-yellow-700/50 bg-yellow-900/20 p-6 max-w-3xl mx-auto mb-8">
             <h2 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
               🌟 Your votes matter more!
             </h2>
@@ -152,9 +147,9 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
               As a verified creator, your weapon builds will be featured as "Creator's Choice" and help guide the community. 
               Your votes carry special weight and will be prominently displayed.
             </p>
-          </div>
+          </Card>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg max-w-2xl mx-auto">
+          <Card className="p-8 max-w-2xl mx-auto">
             <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
               Select a Weapon to Vote On
             </h3>
@@ -166,7 +161,7 @@ export default function CreatorVotingClient({ creatorToken }: CreatorVotingClien
               onWeaponSelect={handleWeaponSelect}
               placeholder="Search for a weapon to vote on..."
             />
-          </div>
+          </Card>
 
           {/* Creator Profile Link */}
           <div className="mt-8">

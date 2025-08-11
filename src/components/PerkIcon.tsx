@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
+import { asDisplayUrl } from '@/lib/images'
 
 interface PerkIconProps {
-  iconUrl: string
+  iconUrl: string | null
   altText: string
   size?: 'small' | 'medium' | 'large'
   overlayIcon?: string | null
@@ -47,11 +48,14 @@ export default function PerkIcon({
   const sizeClasses = size === 'small' ? 'w-4 h-4' : size === 'medium' ? 'w-8 h-8' : 'w-16 h-16'
   const iconSize = size === 'small' ? 'text-xs' : size === 'medium' ? 'text-sm' : 'text-2xl'
 
+  const displayUrl = asDisplayUrl(iconUrl || null)
+  const overlayUrl = asDisplayUrl(overlayIcon || null)
+
   return (
     <div className={`relative ${sizeClasses} ${className}`}>
-      {!imageError ? (
+      {displayUrl && !imageError ? (
         <Image
-          src={iconUrl}
+          src={displayUrl}
           alt={altText}
           fill
           sizes="100%"
@@ -69,10 +73,10 @@ export default function PerkIcon({
       )}
       
       {/* Overlay Icon */}
-      {overlayIcon && !overlayError && (
+      {overlayUrl && !overlayError && (
         <div className="absolute top-0 right-0 w-4 h-4 bg-gray-800 border border-gray-500 rounded-sm overflow-hidden">
           <Image
-            src={overlayIcon}
+            src={overlayUrl}
             alt="Type indicator"
             width={16}
             height={16}

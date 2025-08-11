@@ -89,7 +89,19 @@ export function usePopularBuilds(limit: number = 10, initialData?: PopularBuild[
         .limit(limit)
       
       if (error) throw error
-      return data || []
+      const builds = (data || []) as PopularBuild[]
+
+      // Enrich with weapon media by querying weapons table
+      const weaponIds = Array.from(new Set(builds.map(b => b.weapon_id)))
+      if (weaponIds.length === 0) return builds
+      const { data: weapons } = await supabase
+        .from('weapons')
+        .select('id, image_media_id, media:media(*)')
+        .in('id', weaponIds)
+      const idToMedia: Record<string, any> = {}
+      ;(weapons || []).forEach(w => { idToMedia[w.id] = (w as any).media || null })
+
+      return builds.map(b => ({ ...b, media: idToMedia[b.weapon_id] || null })) as any
     },
     initialData,
   })
@@ -154,19 +166,19 @@ export function useBuildPerks(buildIds: string[]) {
       // Fetch all unique perks
       const { data: perks, error: perksError } = await supabase
         .from('perks')
-        .select('*')
+        .select('*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*)')
         .in('id', Array.from(allPerkIds))
       
       if (perksError) throw perksError
       
       // Create lookup map for perks
-      const perkLookup: Record<string, Tables<'perks'>> = {}
+      const perkLookup: Record<string, (Tables<'perks'> & { main_media?: any; type_media?: any })> = {}
       ;(perks || []).forEach((perk) => {
-        perkLookup[perk.id] = perk as Tables<'perks'>
+        perkLookup[perk.id] = perk as any
       })
       
       // Return perks organized by build ID
-      const result: Record<string, Tables<'perks'>[]> = {}
+      const result: Record<string, (Tables<'perks'> & { main_media?: any; type_media?: any })[]> = {}
       Object.entries(buildPerkMap).forEach(([buildId, perkIds]) => {
         result[buildId] = perkIds.map(id => perkLookup[id]).filter(Boolean)
       })

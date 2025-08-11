@@ -2,8 +2,13 @@ import { Weapon } from '@/hooks/useWeapons'
 import { Perk as DatabasePerk } from '@/hooks/usePerks'
 // Removed legacy PerkSlot (mockData-based)
 import PerkIcon from './PerkIcon'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import SmartTooltip from './SmartTooltip'
 import { useState, useMemo } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Toolbar, ToolbarSection } from '@/components/ui/toolbar'
 
 // Database Perk Slot Component
 interface DatabasePerkSlotProps {
@@ -41,18 +46,18 @@ function DatabasePerkSlot({ perk, isSelected = false, onClick, percentage = 0, s
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >
-          {/* Main Icon with Fallback */}
+          {/* Main Icon with Fallback - prefer stored media only */}
           <PerkIcon
-            iconUrl={perk.main_icon_url || ''}
+            iconUrl={getImageFromRecord({ media: (perk as any).main_media || null, legacyUrl: null }) || ''}
             altText={perk.name}
-            overlayIcon={perk.type_icon_url}
+            overlayIcon={getImageFromRecord({ media: (perk as any).type_media || null, legacyUrl: null }) || undefined}
           />
           
           {/* Percentage Overlay */}
           {showPercentage && (
-            <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full border border-gray-800">
+            <Badge className="absolute -bottom-1 -right-1 px-1.5 py-0.5 text-[10px] leading-none">
               {percentage}%
-            </div>
+            </Badge>
           )}
         </div>
       </SmartTooltip>
@@ -82,9 +87,9 @@ function MobilePerkOption({ perk, isSelected = false, onClick, percentage = 0, s
       {/* Perk Icon */}
       <div className={`flex-shrink-0 ${isSelected ? '' : 'grayscale'}`}>
         <PerkIcon
-          iconUrl={perk.main_icon_url || ''}
+          iconUrl={getImageFromRecord({ media: (perk as any).main_media || null, legacyUrl: null }) || ''}
           altText={perk.name}
-          overlayIcon={perk.type_icon_url}
+          overlayIcon={getImageFromRecord({ media: (perk as any).type_media || null, legacyUrl: null }) || undefined}
           size="large"
         />
       </div>
@@ -94,9 +99,9 @@ function MobilePerkOption({ perk, isSelected = false, onClick, percentage = 0, s
         <div className="flex items-center justify-between">
           <div className="font-semibold text-yellow-300 text-sm">{perk.name}</div>
           {showPercentage && (
-            <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+            <Badge className="text-[10px] leading-none px-2 py-0.5">
               {percentage}%
-            </div>
+            </Badge>
           )}
         </div>
         <div className="text-gray-300 text-xs leading-relaxed">{perk.description}</div>
@@ -166,20 +171,24 @@ export default function WeaponProficiencyGrid({
   }
 
   return (
-    <div className="bg-gray-800 p-4 md:p-6 rounded-lg border border-gray-700">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <PerkIcon
-          iconUrl={weapon.image_url || ''}
-          altText={weapon.name}
-          className="p-1"
-        />
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold text-white">{weapon.name}</h2>
-          <p className="text-gray-400">{weapon.weapon_type}</p>
-          <p className="text-sm text-gray-500">{perks.length} perks available across {Object.keys(perksByTier).length} tiers</p>
-        </div>
-      </div>
+    <Card className="p-0">
+      <CardHeader className="pb-2">
+        <Toolbar>
+          <ToolbarSection>
+            <PerkIcon
+              iconUrl={getImageFromRecord({ media: (weapon as any).media || null, legacyUrl: null }) || ''}
+              altText={weapon.name}
+              className="p-1"
+            />
+            <div>
+              <CardTitle className="text-xl md:text-2xl">{weapon.name}</CardTitle>
+              <CardDescription>{weapon.weapon_type}</CardDescription>
+              <p className="text-sm text-gray-500">{perks.length} perks available across {Object.keys(perksByTier).length} tiers</p>
+            </div>
+          </ToolbarSection>
+        </Toolbar>
+      </CardHeader>
+      <CardContent className="pt-2">
 
       {/* Mobile Layout */}
       <div className="block md:hidden">
@@ -217,9 +226,7 @@ export default function WeaponProficiencyGrid({
         <div className="grid grid-cols-7 gap-4 mb-4">
           {Array.from({ length: 7 }, (_, i) => (
             <div key={i} className="text-center">
-              <div className="bg-gray-600 border border-gray-500 rounded px-3 py-1 text-white font-bold">
-                {i + 1}
-              </div>
+              <Badge className="px-3 py-1 font-bold">{i + 1}</Badge>
             </div>
           ))}
         </div>
@@ -245,7 +252,7 @@ export default function WeaponProficiencyGrid({
                   ))
                 ) : (
                   // Empty slot
-                  <div className="w-16 h-16 bg-gray-600 border border-gray-500 rounded opacity-50"></div>
+                  <Skeleton className="w-16 h-16 rounded" />
                 )}
               </div>
             )
@@ -265,9 +272,7 @@ export default function WeaponProficiencyGrid({
               
               return (
                 <div key={perkId} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                  <span className="bg-gray-600 px-2 py-1 rounded text-xs font-bold w-fit">
-                    Slot {perk.tier_level + 1}
-                  </span>
+                  <Badge className="w-fit">Slot {perk.tier_level + 1}</Badge>
                   <div className="flex-1 min-w-0">
                     <span className="text-yellow-300 font-medium text-sm md:text-base block sm:inline">
                       {perk.name}
@@ -282,6 +287,7 @@ export default function WeaponProficiencyGrid({
           </div>
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   )
 } 

@@ -30,7 +30,7 @@ export default async function CreatorProfilePage({ params }: CreatorProfilePageP
         weapons (
           id,
           name,
-          image_url,
+          media:media(*),
           weapon_type,
           vocation
         )

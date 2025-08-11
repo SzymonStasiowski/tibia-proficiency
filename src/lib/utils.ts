@@ -51,3 +51,8 @@ export function isValidCreatorToken(token: string): boolean {
 
 // Alternative: if you prefer no formatting to avoid any hydration issues
 // Removed formatNumberSimple; use formatNumber for consistent formatting.
+
+// Utility to concatenate class names conditionally (shadcn convention)
+export function cn(...inputs: Array<string | undefined | null | false>): string {
+  return inputs.filter(Boolean).join(' ')
+}

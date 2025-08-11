@@ -37,7 +37,7 @@ export default function MostVotedBuilds({ builds }: MostVotedBuildsProps) {
     <div>
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold mb-2">
-          🏆 <span className="text-yellow-500">Most Voted Builds</span>
+          🏆 <span className="text-yellow-400">Most Voted Builds</span>
         </h2>
         <p className="text-base md:text-lg text-gray-600 dark:text-gray-300">
           Top community builds across all weapons
@@ -61,6 +61,9 @@ export default function MostVotedBuilds({ builds }: MostVotedBuildsProps) {
                 description: p.description || '',
                 main_icon_url: p.main_icon_url || '',
                 type_icon_url: p.type_icon_url || undefined,
+                // Pass through media so UI uses Supabase storage instead of placeholders
+                main_media: (p as any).main_media || null,
+                type_media: (p as any).type_media || null,
               }))}
               showRank={index + 1}
               hideVoting={true}

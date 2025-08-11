@@ -59,9 +59,11 @@ export type Database = {
           description: string | null
           id: string
           main_icon_url: string | null
+          main_media_id: string | null
           name: string
           tier_level: number
           type_icon_url: string | null
+          type_media_id: string | null
           vote_count: number
           weapon_id: string
         }
@@ -70,9 +72,11 @@ export type Database = {
           description?: string | null
           id?: string
           main_icon_url?: string | null
+          main_media_id?: string | null
           name: string
           tier_level: number
           type_icon_url?: string | null
+          type_media_id?: string | null
           vote_count?: number
           weapon_id: string
         }
@@ -81,9 +85,11 @@ export type Database = {
           description?: string | null
           id?: string
           main_icon_url?: string | null
+          main_media_id?: string | null
           name?: string
           tier_level?: number
           type_icon_url?: string | null
+          type_media_id?: string | null
           vote_count?: number
           weapon_id?: string
         }
@@ -95,6 +101,20 @@ export type Database = {
             referencedRelation: "weapons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "perks_main_media_id_fkey"
+            columns: ["main_media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "perks_type_media_id_fkey"
+            columns: ["type_media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
         ]
       }
       weapons: {
@@ -102,6 +122,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          image_media_id: string | null
           name: string
           vocation: string | null
           weapon_type: string | null
@@ -110,6 +131,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          image_media_id?: string | null
           name: string
           vocation?: string | null
           weapon_type?: string | null
@@ -118,9 +140,57 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          image_media_id?: string | null
           name?: string
           vocation?: string | null
           weapon_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weapons_image_media_id_fkey"
+            columns: ["image_media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      media: {
+        Row: {
+          id: string
+          source_url: string | null
+          storage_path: string
+          width: number | null
+          height: number | null
+          format: string | null
+          bytes: number | null
+          sha256: string // bytea represented as base64/hex string in generated types; using string
+          attribution: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          source_url?: string | null
+          storage_path: string
+          width?: number | null
+          height?: number | null
+          format?: string | null
+          bytes?: number | null
+          sha256: string
+          attribution?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          source_url?: string | null
+          storage_path?: string
+          width?: number | null
+          height?: number | null
+          format?: string | null
+          bytes?: number | null
+          sha256?: string
+          attribution?: string | null
+          created_at?: string
         }
         Relationships: []
       }

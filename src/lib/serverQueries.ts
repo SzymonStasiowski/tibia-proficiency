@@ -51,7 +51,8 @@ export async function getWeaponsByCategory(categoryId: string) {
     // Get weapons with their vote counts from the votes table
     let query = supabaseServer.from('weapons').select(`
       *,
-      votes (id)
+      votes (id),
+      media:media(*)
     `)
     
     if (weaponType && weaponType !== 'all') {
@@ -87,7 +88,8 @@ export async function getWeaponByName(name: string) {
       .from('weapons')
       .select(`
         *,
-        perks (*)
+        media:media(*),
+        perks (*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*))
       `)
       .ilike('name', name)
       .single()
@@ -108,7 +110,7 @@ export async function getWeaponPerks(weaponId: string) {
   try {
     const { data, error } = await supabaseServer
       .from('perks')
-      .select('*')
+      .select('*, main_media:media!perks_main_media_id_fkey(*), type_media:media!perks_type_media_id_fkey(*)')
       .eq('weapon_id', weaponId)
       .order('tier_level')
     
@@ -125,7 +127,7 @@ export async function getAllWeapons() {
   try {
     const { data, error } = await supabaseServer
       .from('weapons')
-      .select('*')
+      .select(`*, media:media(*)`)
       .order('name')
     
     if (error) throw error
@@ -144,7 +146,8 @@ export async function getHotWeapons(limit: number = 10) {
       .from('weapons')
       .select(`
         *,
-        votes (id)
+        votes (id),
+        media:media(*)
       `)
       .order('name')
     
@@ -182,7 +185,16 @@ export async function getPopularBuilds(limit: number = 10) {
       .limit(limit)
     
     if (error) throw error
-    return data || []
+    const builds = data || []
+    const weaponIds = Array.from(new Set(builds.map((b: any) => b.weapon_id)))
+    if (weaponIds.length === 0) return builds
+    const { data: weapons } = await supabaseServer
+      .from('weapons')
+      .select('id, media:media(*)')
+      .in('id', weaponIds)
+    const idToMedia: Record<string, any> = {}
+    ;(weapons || []).forEach((w: any) => { idToMedia[w.id] = w.media || null })
+    return builds.map((b: any) => ({ ...b, media: idToMedia[b.weapon_id] || null }))
   } catch (error) {
     console.error('Error fetching popular builds:', error)
     return []

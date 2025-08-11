@@ -3,11 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import Link from 'next/link'
 import { Creator, CreatorStats } from '@/hooks/useCreators'
 import { weaponNameToSlug } from '@/lib/utils'
 import { useToast } from '@/hooks'
-import Toast from '@/components/Toast'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Toolbar, ToolbarSection } from '@/components/ui/toolbar'
+// Local Toast component is deprecated; Sonner toaster is global
 
 interface CreatorVote {
   id: string
@@ -18,7 +22,7 @@ interface CreatorVote {
   weapons: {
     id: string
     name: string
-    image_url: string | null
+    media?: { id: string; storage_path: string } | null
     weapon_type: string | null
     vocation: string | null
   }
@@ -36,7 +40,7 @@ export default function CreatorProfileClient({
   creatorStats 
 }: CreatorProfileClientProps) {
   const router = useRouter()
-  const { toasts, removeToast, success } = useToast()
+  const { success } = useToast()
   const [filter, setFilter] = useState<'all' | 'recent'>('all')
 
   // Get platform colors and icons
@@ -121,33 +125,24 @@ export default function CreatorProfileClient({
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => router.push('/')}
-                className="text-blue-600 hover:text-blue-500 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              >
-                ←
-              </button>
-              <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
+          <Toolbar>
+            <ToolbarSection>
+              <Button variant="ghost" onClick={() => router.push('/')}>←</Button>
+              <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
               <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
                 <span style={{ color: '#9146FF' }}>tibia</span><span style={{ color: '#53FC18' }}>vote</span>
               </Link>
-            </div>
-            
-            <button
-              onClick={handleShareProfile}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
-            >
-              📤 Share Profile
-            </button>
-          </div>
+            </ToolbarSection>
+            <ToolbarSection>
+              <Button onClick={handleShareProfile}>📤 Share Profile</Button>
+            </ToolbarSection>
+          </Toolbar>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         {/* Creator Hero Section */}
-        <div className={`${platformInfo.bgColor} ${platformInfo.borderColor} border rounded-xl p-8 mb-8`}>
+         <Card className={`${platformInfo.bgColor} ${platformInfo.borderColor} border p-8 mb-8`}>
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             {/* Avatar */}
             <div className="relative">
@@ -161,7 +156,7 @@ export default function CreatorProfileClient({
                 >
                   {creator.avatar_url ? (
                     <Image
-                      src={creator.avatar_url}
+                      src={asDisplayUrl(creator.avatar_url)!}
                       alt={creator.channel_name}
                       width={128}
                       height={128}
@@ -178,7 +173,7 @@ export default function CreatorProfileClient({
                 <>
                   {creator.avatar_url ? (
                     <Image
-                      src={creator.avatar_url}
+                      src={asDisplayUrl(creator.avatar_url)!}
                       alt={creator.channel_name}
                       width={128}
                       height={128}
@@ -228,7 +223,7 @@ export default function CreatorProfileClient({
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Creator's Choices Section */}
         <div className="mb-8">
@@ -244,26 +239,8 @@ export default function CreatorProfileClient({
             
             {creatorVotes.length > 10 && (
               <div className="flex gap-2 mt-4 sm:mt-0">
-                <button
-                  onClick={() => setFilter('recent')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    filter === 'recent'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Recent
-                </button>
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    filter === 'all'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  All ({creatorVotes.length})
-                </button>
+                <Button variant={filter === 'recent' ? 'default' : 'secondary'} onClick={() => setFilter('recent')}>Recent</Button>
+                <Button variant={filter === 'all' ? 'default' : 'secondary'} onClick={() => setFilter('all')}>All ({creatorVotes.length})</Button>
               </div>
             )}
           </div>
@@ -280,18 +257,22 @@ export default function CreatorProfileClient({
                 >
                   {/* Weapon Image */}
                   <div className="flex items-center justify-center">
-                    {vote.weapons.image_url ? (
-                      <Image
-                        src={vote.weapons.image_url}
-                        alt={vote.weapons.name}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 object-contain"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="text-2xl">⚔️</div>
-                    )}
+                    {(() => {
+                      const raw = getImageFromRecord({ media: (vote.weapons as any).media || null, legacyUrl: null })
+                      const url = asDisplayUrl(raw)
+                      return url ? (
+                        <Image
+                          src={url}
+                          alt={vote.weapons.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 object-contain"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="text-2xl">⚔️</div>
+                      )
+                    })()}
                   </div>
                   
                   {/* Creator Badge */}
@@ -336,17 +317,7 @@ export default function CreatorProfileClient({
         </div>
       </div>
       
-      {/* Toast Notifications */}
-      <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      {/* Toasts handled globally by <AppToaster /> in layout */}
     </div>
   )
 }

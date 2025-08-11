@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    // Disable Next/Image optimization globally; we load remote images from multiple sources
+    // and explicitly control sizing in components.
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
+  },
   /* config options here */
   async headers() {
     return [
@@ -17,7 +28,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            value: 'no-referrer',
           },
           {
             key: 'X-XSS-Protection',
@@ -34,7 +45,10 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: https:",
+              // Allow images from anywhere plus data/blob
+              "img-src * data: blob:",
+              'upgrade-insecure-requests',
+              // Allow Supabase API/storage
               "connect-src 'self' https://*.supabase.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",

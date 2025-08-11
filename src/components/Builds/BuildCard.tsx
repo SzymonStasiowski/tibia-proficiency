@@ -4,13 +4,24 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import BuildPerkDisplay from '@/components/Builds/BuildPerkDisplay'
 import Image from 'next/image'
+import { getImageFromRecord, asDisplayUrl } from '@/lib/images'
 import SmartTooltip from '@/components/SmartTooltip'
 import { weaponNameToSlug } from '@/lib/utils'
 import type { PopularBuild, Build } from '@/hooks/useBuilds'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 interface BuildCardProps {
   build: PopularBuild | (Build & { weapon_name?: string; weapon_image_url?: string })
-  perks?: { id: string; name: string; description: string; main_icon_url: string; type_icon_url?: string }[]
+  perks?: {
+    id: string
+    name: string
+    description: string
+    main_icon_url: string
+    type_icon_url?: string
+    main_media?: { id: string; storage_path: string } | null
+    type_media?: { id: string; storage_path: string } | null
+  }[]
   onVote?: (buildId: string) => void
   userBuildVotes?: string[]
   votingBuildId?: string | null
@@ -19,6 +30,7 @@ interface BuildCardProps {
   weaponData?: {
     name: string
     image_url?: string
+    media?: { id: string; storage_path: string } | null
   }
 }
 
@@ -120,20 +132,24 @@ export default function BuildCard({
                 onMouseLeave={() => setIsWeaponHovered(false)}
                 onClick={handleWeaponClick}
               >
-                {weaponImageUrl ? (
-                  <Image
-                    src={weaponImageUrl}
-                    alt={weaponName}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 object-contain bg-gray-700 rounded-lg p-1 hover:bg-gray-600 transition-colors"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-lg transition-colors">
-                    ⚔️
-                  </div>
-                )}
+                {(() => {
+                  const raw = getImageFromRecord({ media: (weaponData as any)?.media || (build as any).media || null, legacyUrl: null })
+                  const url = asDisplayUrl(raw)
+                  return url ? (
+                    <Image
+                      src={url}
+                      alt={weaponName}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 object-contain bg-gray-700 rounded-lg p-1 hover:bg-gray-600 transition-colors"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-lg transition-colors">
+                      ⚔️
+                    </div>
+                  )
+                })()}
               </div>
             </SmartTooltip>
           </div>
@@ -149,19 +165,13 @@ export default function BuildCard({
             {build.situation_tags && build.situation_tags.length > 0 && (
               <div className="flex flex-wrap items-center gap-1 mb-2">
                 {build.situation_tags.includes('solo') && (
-                  <span className="px-2 py-1 bg-green-600 text-white rounded text-xs font-medium">
-                    👤 Solo
-                  </span>
+                  <Badge variant="success">👤 Solo</Badge>
                 )}
                 {build.situation_tags.includes('team') && (
-                  <span className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium">
-                    👥 Team
-                  </span>
+                  <Badge>👥 Team</Badge>
                 )}
                 {build.situation_tags.includes('bosses') && (
-                  <span className="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium">
-                    👹 Bossing
-                  </span>
+                  <Badge variant="destructive">👹 Bossing</Badge>
                 )}
               </div>
             )}
@@ -173,26 +183,23 @@ export default function BuildCard({
               <div className="text-2xl font-bold text-white">{build.vote_count}</div>
               <div className="text-xs text-gray-400">votes</div>
               {!hideVoting && (
-                <button
+                <Button
                   onClick={handleVote}
+                  size='icon'
                   disabled={votingBuildId === build.id}
-                  className={`absolute -top-0.5 -right-2 w-4 h-4 rounded-full text-lg font-bold transition-all duration-200 flex items-center justify-center origin-top-right ${
+                  className={`absolute -top-0.5 -right-4 !w-5 !h-5 !p-2 text-[12px] font-bold leading-none flex items-center justify-center ${
                     userBuildVotes.includes(build.id)
-                      ? 'bg-transparent border border-green-500 text-green-400'
-                      : 'bg-green-600 text-white disabled:bg-gray-600'
+                      ? 'bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10'
+                      : 'bg-green-600 hover:bg-green-700 text-white'
                   }`}
                   title={
-                    votingBuildId === build.id
-                      ? 'Processing...' 
-                      : userBuildVotes.includes(build.id)
-                      ? 'Click to remove vote' 
+                    userBuildVotes.includes(build.id)
+                      ? 'Click to remove vote'
                       : 'Vote for this build'
                   }
                 >
-                  <span className="inline-block leading-none">
-                    {votingBuildId === build.id ? '⏳' : userBuildVotes.includes(build.id) ? '✓' : '+'}
-                  </span>
-                </button>
+                  {userBuildVotes.includes(build.id) ? '✓' : '+1'}
+                </Button>
               )}
             </div>
           </div>
@@ -236,20 +243,24 @@ export default function BuildCard({
                   onMouseLeave={() => setIsWeaponHovered(false)}
                   onClick={handleWeaponClick}
                 >
-                  {weaponImageUrl ? (
-                    <Image
-                      src={weaponImageUrl}
-                      alt={weaponName}
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 object-contain bg-gray-700 rounded-lg p-2 hover:bg-gray-600 transition-colors"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-2xl transition-colors">
-                      ⚔️
-                    </div>
-                  )}
+                  {(() => {
+                    const raw = getImageFromRecord({ media: (weaponData as any)?.media || (build as any).media || null, legacyUrl: null })
+                    const url = asDisplayUrl(raw)
+                    return url ? (
+                      <Image
+                        src={url}
+                        alt={weaponName}
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 object-contain bg-gray-700 rounded-lg p-2 hover:bg-gray-600 transition-colors"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-2xl transition-colors">
+                        ⚔️
+                      </div>
+                    )
+                  })()}
                 </div>
               </SmartTooltip>
             </div>
@@ -265,19 +276,13 @@ export default function BuildCard({
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Primary Build Type Badge */}
                   {build.situation_tags.includes('solo') && (
-                    <span className="px-3 py-1 bg-green-600 text-white rounded-full text-sm font-semibold">
-                      👤 Solo
-                    </span>
+                    <Badge variant="success">👤 Solo</Badge>
                   )}
                   {build.situation_tags.includes('team') && (
-                    <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-semibold">
-                      👥 Team
-                    </span>
+                    <Badge>👥 Team</Badge>
                   )}
                   {build.situation_tags.includes('bosses') && (
-                    <span className="px-3 py-1 bg-red-600 text-white rounded-full text-sm font-semibold">
-                      👹 Bossing
-                    </span>
+                    <Badge variant="destructive">👹 Bossing</Badge>
                   )}
                 </div>
               )}
@@ -303,31 +308,22 @@ export default function BuildCard({
               <div className="text-4xl font-bold text-white">{build.vote_count}</div>
               <div className="text-sm text-gray-400">votes</div>
               {!hideVoting && (
-                <button
+                <Button
                   onClick={handleVote}
                   disabled={votingBuildId === build.id}
-                  className={`absolute -top-1 -right-4 w-4 h-4 rounded-full text-lg font-bold transition-all duration-200 flex items-center justify-center origin-top-right ${
+                  className={`absolute -top-1 -right-4 !w-5 !h-5 !p-2 text-[12px] font-bold leading-none flex items-center justify-center ${
                     userBuildVotes.includes(build.id)
                       ? 'bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10'
-                      : 'bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 text-white'
                   }`}
                   title={
-                    votingBuildId === build.id
-                      ? 'Processing...' 
-                      : userBuildVotes.includes(build.id)
-                      ? 'Click to remove vote' 
+                    userBuildVotes.includes(build.id)
+                      ? 'Click to remove vote'
                       : 'Vote for this build'
                   }
                 >
-                  <span className="inline-block leading-none">
-                    {votingBuildId === build.id
-                      ? '⏳' 
-                      : userBuildVotes.includes(build.id)
-                      ? '✓' 
-                      : '+'
-                    }
-                  </span>
-                </button>
+                  {userBuildVotes.includes(build.id) ? '✓' : '+1'}
+                </Button>
               )}
             </div>
             
