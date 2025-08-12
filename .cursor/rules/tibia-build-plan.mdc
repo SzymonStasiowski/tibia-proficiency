@@ -1,0 +1,9 @@
+---
+alwaysApply: false
+---
+
+- Do not compute stats; show selections only (showcase-first).
+- Build config is JSON for v1; catalogs are normalized tables.
+- Scrapers must be idempotent, cached, rate-limited, and use upserts.
+- Charms in builds store target monsters as free-text arrays.
+- Keep edits small; reference a spec in docs/ for every task.

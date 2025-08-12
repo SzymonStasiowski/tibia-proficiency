@@ -194,6 +194,65 @@ export type Database = {
         }
         Relationships: []
       }
+      items: {
+        Row: {
+          id: string
+          name: string
+          slot: string
+          category: string
+          vocation_reqs: string[] | null
+          level_req: number | null
+          icon_url: string | null
+          icon_media_id: string | null
+          armor: number | null
+          attributes: string | null
+          resistances: string | null
+          imbu_slots: number | null
+          source_url: string | null
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          slot: string
+          category: string
+          vocation_reqs?: string[] | null
+          level_req?: number | null
+          icon_url?: string | null
+          icon_media_id?: string | null
+          armor?: number | null
+          attributes?: string | null
+          resistances?: string | null
+          imbu_slots?: number | null
+          source_url?: string | null
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          slot?: string
+          category?: string
+          vocation_reqs?: string[] | null
+          level_req?: number | null
+          icon_url?: string | null
+          icon_media_id?: string | null
+          armor?: number | null
+          attributes?: string | null
+          resistances?: string | null
+          imbu_slots?: number | null
+          source_url?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_icon_media_id_fkey"
+            columns: ["icon_media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       votes: {
         Row: {
           created_at: string

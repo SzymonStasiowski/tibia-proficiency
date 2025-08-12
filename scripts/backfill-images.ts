@@ -12,15 +12,16 @@ import { Readable } from 'node:stream'
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { Database } from '@/lib/database.types'
+import { imageSize } from 'image-size'
 
-type TableKind = 'weapons' | 'perks'
-type MediaKind = 'weapon' | 'perk-main' | 'perk-type'
+type TableKind = 'weapons' | 'perks' | 'items'
+type MediaKind = 'weapon' | 'perk-main' | 'perk-type' | 'item'
 
 const PUBLIC_BUCKET = 'images-public'
 const MAX_BYTES = 2 * 1024 * 1024 // 2MB
 const DEFAULT_CONCURRENCY = 6
 const DEFAULT_LIMIT = 100000
-const DEFAULT_DELAY_MS = 0
+const DEFAULT_DELAY_MS = 150
 const CHECKPOINT = resolve('.backfill-progress.json')
 
 // Minimal .env loader to avoid external deps in scripts
@@ -49,7 +50,7 @@ function loadEnvFile(path: string) {
 loadEnvFile(resolve(process.cwd(), '.env.local'))
 loadEnvFile(resolve(process.cwd(), '.env'))
 
-function parseArgs(): { table: TableKind; concurrency: number; limit: number; resume: boolean; delayMs: number; perkId?: string } {
+function parseArgs(): { table: TableKind; concurrency: number; limit: number; resume: boolean; delayMs: number; perkId?: string; fixPlaceholders?: boolean } {
   const args = process.argv.slice(2)
   const get = (flag: string) => {
     const idx = args.indexOf(flag)
@@ -62,10 +63,11 @@ function parseArgs(): { table: TableKind; concurrency: number; limit: number; re
   const resume = has('--resume')
   const delayMs = Number(get('--delayMs') || DEFAULT_DELAY_MS)
   const perkId = get('--perkId')
-  if (!['weapons', 'perks'].includes(table)) {
-    throw new Error('--table must be weapons or perks')
+  const fixPlaceholders = has('--fix-placeholders') || has('--fixPlaceholders')
+  if (!['weapons', 'perks', 'items'].includes(table)) {
+    throw new Error('--table must be weapons, perks, or items')
   }
-  return { table: table as TableKind, concurrency, limit, resume, delayMs, perkId }
+  return { table: table as TableKind, concurrency, limit, resume, delayMs, perkId, fixPlaceholders }
 }
 
 function getPublicUrlFromPath(storagePath: string): string {
@@ -99,6 +101,13 @@ type PerkRow = {
   weapon_id: string
 }
 
+type ItemRow = {
+  id: string
+  name: string
+  icon_url: string | null
+  icon_media_id: string | null
+}
+
 type CheckpointState = {
   processedIds: Record<string, true>
 }
@@ -129,12 +138,23 @@ async function fetchAsBuffer(url: string): Promise<{ buffer: Buffer; contentType
       'User-Agent': 'Mozilla/5.0 (compatible; ProficiencyBot/1.0; +https://proficiency.app)'
     }
   })
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
+  if (!res.ok) throw Object.assign(new Error(`Fetch failed: ${res.status}`), { status: res.status })
   const ct = res.headers.get('content-type') || 'application/octet-stream'
   if (!ct.startsWith('image/')) throw new Error('Not an image')
   const arr = await res.arrayBuffer()
   if (arr.byteLength > MAX_BYTES) throw new Error('Image too large')
-  return { buffer: Buffer.from(arr), contentType: ct }
+  let buffer = Buffer.from(arr)
+  // Reject 1x1 placeholders
+  try {
+    const dim = imageSize(buffer)
+    if ((dim.width === 1 && dim.height === 1) || (dim.width === 0 && dim.height === 0)) {
+      throw new Error('Placeholder 1x1 image')
+    }
+  } catch (e) {
+    // If dimensions fail to parse but content-type is image/gif and size tiny, skip
+    if (buffer.length < 128) throw new Error('Invalid or tiny image')
+  }
+  return { buffer, contentType: ct }
 }
 
 function getExtFromContentType(contentType: string | null): string {
@@ -151,11 +171,12 @@ function buildPath(kind: MediaKind, shaHex: string, ext: string, slugOrId?: stri
   const clean = ext.replace(/^\./, '')
   if (kind === 'weapon') return `weapons/${slugOrId || 'unknown'}/${shaHex}.${clean}`
   if (kind === 'perk-main') return `perks/main/${shaHex}.${clean}`
-  return `perks/type/${shaHex}.${clean}`
+  if (kind === 'perk-type') return `perks/type/${shaHex}.${clean}`
+  return `items/icons/${shaHex}.${clean}`
 }
 
 async function main() {
-  const { table, concurrency, limit, resume, delayMs, perkId } = parseArgs()
+  const { table, concurrency, limit, resume, delayMs, perkId, fixPlaceholders } = parseArgs()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!supabaseUrl || !serviceKey) throw new Error('Missing Supabase env')
@@ -163,7 +184,7 @@ async function main() {
 
   await ensureBucket(admin)
 
-  const checkpoint = resume ? loadCheckpoint() : { processedIds: {} }
+  const checkpoint = resume && !(table === 'items') ? loadCheckpoint() : { processedIds: {} }
 
   // Fetch candidates
   if (table === 'weapons') {
@@ -186,7 +207,7 @@ async function main() {
       checkpoint.processedIds[row.id] = true
       saveCheckpoint(checkpoint)
     })
-  } else {
+  } else if (table === 'perks') {
     // perks
     let perksQuery = admin
       .from('perks')
@@ -244,6 +265,46 @@ async function main() {
     await linkPerksByNormalizedUrl(admin)
     // Map by normalized key derived directly from media.source_url
     await linkPerksByNormalizedUrlFromMedia(admin)
+  } else {
+    // items
+    const baseQ = admin
+      .from('items')
+      .select('id, name, icon_url, icon_media_id')
+      .is('icon_media_id', null)
+      .not('icon_url', 'is', null)
+      .limit(limit)
+    const { data: baseRows, error: baseErr } = await baseQ
+    if (baseErr) throw baseErr
+    let items = (baseRows || []) as ItemRow[]
+
+    if (fixPlaceholders) {
+      const { data: linked, error: linkedErr } = await admin
+        .from('items')
+        .select('id, name, icon_url, icon_media_id, media:icon_media_id(bytes, source_url)')
+        .not('icon_media_id', 'is', null)
+        .limit(limit)
+      if (linkedErr) throw linkedErr
+      const bad = (linked || []).filter((r: any) => {
+        const m = r.media as { bytes: number | null; source_url: string | null } | null
+        if (!m) return false
+        const isData = (m.source_url || '').startsWith('data:')
+        const tiny = (m.bytes || 0) <= 100
+        return isData || tiny
+      }) as any[]
+      items = items.concat(bad.map((r: any) => ({ id: r.id, name: r.name, icon_url: r.icon_url, icon_media_id: r.icon_media_id } as ItemRow)))
+    }
+    await runQueue(items, concurrency, delayMs, async (row) => {
+      // When fixing placeholders, ignore checkpoint to force reprocessing
+      if (!fixPlaceholders && checkpoint.processedIds[row.id]) return
+      if (!row.icon_url) return
+      await runWithRetry(async () => {
+        await processOne(admin, row.icon_url!, 'item', row.id, 'Tibia Wiki (Fandom)', async (mediaId) => {
+          await admin.from('items').update({ icon_media_id: mediaId }).eq('id', row.id)
+        })
+      }, 5)
+      checkpoint.processedIds[row.id] = true
+      if (!fixPlaceholders) saveCheckpoint(checkpoint)
+    })
   }
 
   console.log('Backfill completed')
@@ -593,10 +654,16 @@ async function processOne(
   const shaHex = hash.toString('hex')
 
   // Dedupe by sha
-  const { data: existing } = await admin.from('media').select('id,storage_path').eq('sha256', `\\x${shaHex}`).maybeSingle()
+  const { data: existing } = await admin.from('media').select('id,storage_path,source_url,bytes').eq('sha256', `\\x${shaHex}`).maybeSingle()
   if (existing) {
-    await onLinked(existing.id)
-    return
+    const src = (existing as any).source_url as string | null
+    const bytes = (existing as any).bytes as number | null
+    const isPlaceholder = (src && src.startsWith('data:')) || (bytes != null && bytes <= 100)
+    if (!isPlaceholder) {
+      await onLinked((existing as any).id)
+      return
+    }
+    // else: continue and upload the fetched non-placeholder image
   }
 
   const ext = getExtFromContentType(contentType)
@@ -654,7 +721,7 @@ async function runQueue<T>(items: T[], concurrency: number, delayMs: number, tas
   await Promise.all(workers)
 }
 
-async function runWithRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+async function runWithRetry<T>(fn: () => Promise<T>, attempts = 6): Promise<T> {
   let lastErr: unknown
   for (let i = 0; i < attempts; i++) {
     try {
@@ -664,7 +731,8 @@ async function runWithRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
       const status = typeof e?.status === 'number' ? e.status : undefined
       const isRetriable = !status || status >= 500 || status === 429
       if (!isRetriable || i === attempts - 1) break
-      const backoff = 500 * Math.pow(2, i)
+      const jitter = Math.floor(Math.random()*200)
+      const backoff = 500 * Math.pow(2, i) + jitter
       await sleep(backoff)
     }
   }

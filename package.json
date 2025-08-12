@@ -6,7 +6,14 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "scrape:items": "tsx scripts/scrape/_runner.ts items --limit 500 --dryRun",
+    "scrape:items:write": "tsx scripts/scrape/_runner.ts items --limit 500",
+    "scrape:imbuements": "tsx scripts/scrape/_runner.ts imbuements --limit 500 --dryRun",
+    "scrape:charms": "tsx scripts/scrape/_runner.ts charms --limit 500 --dryRun",
+    "scrape:all": "tsx scripts/scrape/_runner.ts all --limit 500 --dryRun",
+    "scrape:items:icons": "tsx scripts/scrape/fill-item-icons.ts",
+    "backfill:items:icons": "tsx scripts/backfill-images.ts --table items --concurrency 6 --limit 2000 --resume"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
@@ -15,10 +22,14 @@
     "@supabase/supabase-js": "^2.53.0",
     "@tanstack/react-query": "^5.84.1",
     "@tanstack/react-query-devtools": "^5.84.1",
+    "@types/cheerio": "0.22.35",
+    "@types/image-size": "0.7.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "cheerio": "1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "image-size": "2.0.2",
     "lucide-react": "^0.539.0",
     "next": "15.4.5",
     "react": "19.1.0",
@@ -33,11 +44,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.5",
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
     "tailwindcss": "^4",
-    "typescript": "^5",
     "tsx": "^4.19.2",
-    "dotenv": "^16.4.5"
+    "typescript": "^5"
   }
 }

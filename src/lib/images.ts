@@ -6,9 +6,9 @@ export type MediaRecord = {
 }
 
 export function getPublicUrl(storagePath: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
   if (!baseUrl) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL for public storage URLs')
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_STORAGE_URL or NEXT_PUBLIC_SUPABASE_URL for public storage URLs')
   }
   return `${baseUrl}/storage/v1/object/public/${PUBLIC_BUCKET}/${storagePath}`
 }
@@ -44,7 +44,7 @@ export function buildStoragePath(
 
 export function asDisplayUrl(url: string | null): string | null {
   if (!url) return null
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
   const supaPrefix = baseUrl ? `${baseUrl}/storage/v1/object/public/` : null
   if (supaPrefix && url.startsWith(supaPrefix)) return url
   // If it looks like a Supabase public URL but baseUrl differs (e.g., region alias), allow direct
