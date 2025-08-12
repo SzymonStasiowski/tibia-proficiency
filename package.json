@@ -10,10 +10,12 @@
     "scrape:items": "tsx scripts/scrape/_runner.ts items --limit 500 --dryRun",
     "scrape:items:write": "tsx scripts/scrape/_runner.ts items --limit 500",
     "scrape:imbuements": "tsx scripts/scrape/_runner.ts imbuements --limit 500 --dryRun",
-    "scrape:charms": "tsx scripts/scrape/_runner.ts charms --limit 500 --dryRun",
+    "scrape:charms": "tsx scripts/scrape/_runner.ts charms --limit 50 --dryRun",
+    "scrape:charms:write": "tsx scripts/scrape/_runner.ts charms --limit 500",
     "scrape:all": "tsx scripts/scrape/_runner.ts all --limit 500 --dryRun",
     "scrape:items:icons": "tsx scripts/scrape/fill-item-icons.ts",
-    "backfill:items:icons": "tsx scripts/backfill-images.ts --table items --concurrency 6 --limit 2000 --resume"
+    "backfill:items:icons": "tsx scripts/backfill-images.ts --table items --concurrency 6 --limit 2000 --resume",
+    "backfill:charms:icons": "tsx scripts/backfill-images.ts --table charms --concurrency 6 --limit 1000 --resume"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",

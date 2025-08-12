@@ -194,6 +194,82 @@ export type Database = {
         }
         Relationships: []
       }
+      charms: {
+        Row: {
+          id: string
+          name: string
+          type: string
+          description: string | null
+          icon_url: string | null
+          icon_media_id: string | null
+          source_url: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          type: string
+          description?: string | null
+          icon_url?: string | null
+          icon_media_id?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          type?: string
+          description?: string | null
+          icon_url?: string | null
+          icon_media_id?: string | null
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "charms_icon_media_id_fkey",
+            columns: ["icon_media_id"],
+            isOneToOne: false,
+            referencedRelation: "media",
+            referencedColumns: ["id"],
+          }
+        ]
+      }
+      imbuements: {
+        Row: {
+          id: string
+          name: string
+          tier: number | null
+          allowed_slots: string[]
+          icon_url: string | null
+          icon_media_id: string | null
+          source_url: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          tier?: number | null
+          allowed_slots: string[]
+          icon_url?: string | null
+          icon_media_id?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          tier?: number | null
+          allowed_slots?: string[]
+          icon_url?: string | null
+          icon_media_id?: string | null
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imbuements_icon_media_id_fkey",
+            columns: ["icon_media_id"],
+            isOneToOne: false,
+            referencedRelation: "media",
+            referencedColumns: ["id"],
+          }
+        ]
+      }
       items: {
         Row: {
           id: string

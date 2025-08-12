@@ -3,6 +3,9 @@
     tsx scripts/scrape/_runner.ts items --limit 100 --dryRun
     tsx scripts/scrape/_runner.ts imbuements --limit 100
     tsx scripts/scrape/_runner.ts all --limit 50 --dryRun
+    
+    Also supports flag form:
+    tsx scripts/scrape/_runner.ts --domain imbuements --limit 100
 */
 import { loadEnv, createAdminClient, HtmlCache } from './shared'
 import { scrapeItems } from './items'
@@ -11,7 +14,10 @@ import { scrapeCharms } from './charms'
 
 function parseArgs() {
   const args = process.argv.slice(2)
-  const domain = (args[0] || 'items') as 'items' | 'imbuements' | 'charms' | 'all'
+  // Support positional or --domain flag
+  const dFlagIdx = args.indexOf('--domain')
+  const domainVal = dFlagIdx >= 0 ? args[dFlagIdx + 1] : args[0]
+  const domain = (domainVal || 'items') as 'items' | 'imbuements' | 'charms' | 'all'
   const get = (f: string) => {
     const i = args.indexOf(f)
     return i >= 0 ? args[i + 1] : undefined

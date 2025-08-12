@@ -23,7 +23,7 @@ export function getImageFromRecord(params: {
   return null
 }
 
-export type MediaKind = 'weapon' | 'perk-main' | 'perk-type'
+export type MediaKind = 'weapon' | 'perk-main' | 'perk-type' | 'charm' | 'imbuement'
 
 export function buildStoragePath(
   kind: MediaKind,
@@ -39,7 +39,14 @@ export function buildStoragePath(
   if (kind === 'perk-main') {
     return `perks/main/${sha256Hex}.${cleanExt}`
   }
-  return `perks/type/${sha256Hex}.${cleanExt}`
+  if (kind === 'perk-type') {
+    return `perks/type/${sha256Hex}.${cleanExt}`
+  }
+  if (kind === 'imbuement') {
+    return `imbuements/icons/${sha256Hex}.${cleanExt}`
+  }
+  // charm
+  return `charms/icons/${sha256Hex}.${cleanExt}`
 }
 
 export function asDisplayUrl(url: string | null): string | null {

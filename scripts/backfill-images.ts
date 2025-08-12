@@ -14,8 +14,8 @@ import { resolve } from 'node:path'
 import type { Database } from '@/lib/database.types'
 import { imageSize } from 'image-size'
 
-type TableKind = 'weapons' | 'perks' | 'items'
-type MediaKind = 'weapon' | 'perk-main' | 'perk-type' | 'item'
+type TableKind = 'weapons' | 'perks' | 'items' | 'charms' | 'imbuements'
+type MediaKind = 'weapon' | 'perk-main' | 'perk-type' | 'item' | 'charm' | 'imbuement'
 
 const PUBLIC_BUCKET = 'images-public'
 const MAX_BYTES = 2 * 1024 * 1024 // 2MB
@@ -50,7 +50,7 @@ function loadEnvFile(path: string) {
 loadEnvFile(resolve(process.cwd(), '.env.local'))
 loadEnvFile(resolve(process.cwd(), '.env'))
 
-function parseArgs(): { table: TableKind; concurrency: number; limit: number; resume: boolean; delayMs: number; perkId?: string; fixPlaceholders?: boolean } {
+function parseArgs(): { table: TableKind; concurrency: number; limit: number; resume: boolean; delayMs: number; perkId?: string; fixPlaceholders?: boolean; force?: boolean } {
   const args = process.argv.slice(2)
   const get = (flag: string) => {
     const idx = args.indexOf(flag)
@@ -64,10 +64,11 @@ function parseArgs(): { table: TableKind; concurrency: number; limit: number; re
   const delayMs = Number(get('--delayMs') || DEFAULT_DELAY_MS)
   const perkId = get('--perkId')
   const fixPlaceholders = has('--fix-placeholders') || has('--fixPlaceholders')
-  if (!['weapons', 'perks', 'items'].includes(table)) {
-    throw new Error('--table must be weapons, perks, or items')
+  const force = has('--force')
+  if (!['weapons', 'perks', 'items', 'charms', 'imbuements'].includes(table)) {
+    throw new Error('--table must be weapons, perks, items, charms, or imbuements')
   }
-  return { table: table as TableKind, concurrency, limit, resume, delayMs, perkId, fixPlaceholders }
+  return { table: table as TableKind, concurrency, limit, resume, delayMs, perkId, fixPlaceholders, force }
 }
 
 function getPublicUrlFromPath(storagePath: string): string {
@@ -172,7 +173,8 @@ function buildPath(kind: MediaKind, shaHex: string, ext: string, slugOrId?: stri
   if (kind === 'weapon') return `weapons/${slugOrId || 'unknown'}/${shaHex}.${clean}`
   if (kind === 'perk-main') return `perks/main/${shaHex}.${clean}`
   if (kind === 'perk-type') return `perks/type/${shaHex}.${clean}`
-  return `items/icons/${shaHex}.${clean}`
+  if (kind === 'item') return `items/icons/${shaHex}.${clean}`
+  return `charms/icons/${shaHex}.${clean}`
 }
 
 async function main() {
@@ -265,10 +267,37 @@ async function main() {
     await linkPerksByNormalizedUrl(admin)
     // Map by normalized key derived directly from media.source_url
     await linkPerksByNormalizedUrlFromMedia(admin)
+  } else if (table === 'imbuements') {
+    // imbuements
+    const { force } = parseArgs()
+    let query = admin
+      .from('imbuements')
+      .select('id, name, icon_url, icon_media_id')
+      .not('icon_url', 'is', null)
+      .limit(limit)
+    if (!force) {
+      query = query.is('icon_media_id', null)
+    }
+    const { data, error } = await query
+    if (error) throw error
+    const items = (data || []) as { id: string; name: string; icon_url: string | null; icon_media_id: string | null }[]
+    console.log(`[backfill] imbuements candidates: ${items.length}`)
+    if (items.length === 0) {
+      console.log('[backfill] No imbuements to process (either no icon_url set or already linked).')
+    }
+    await runQueue(items, concurrency, delayMs, async (row) => {
+      if (!row.icon_url) return
+      await runWithRetry(async () => {
+        await processOne(admin, row.icon_url!, 'imbuement', row.id, 'Tibia Wiki (Fandom)', async (mediaId) => {
+          await admin.from('imbuements').update({ icon_media_id: mediaId }).eq('id', row.id)
+        })
+      }, 5)
+    })
   } else {
-    // items
+    // items or charms
+    const tableName = table === 'charms' ? 'charms' : 'items'
     const baseQ = admin
-      .from('items')
+      .from(tableName)
       .select('id, name, icon_url, icon_media_id')
       .is('icon_media_id', null)
       .not('icon_url', 'is', null)
@@ -298,9 +327,16 @@ async function main() {
       if (!fixPlaceholders && checkpoint.processedIds[row.id]) return
       if (!row.icon_url) return
       await runWithRetry(async () => {
-        await processOne(admin, row.icon_url!, 'item', row.id, 'Tibia Wiki (Fandom)', async (mediaId) => {
-          await admin.from('items').update({ icon_media_id: mediaId }).eq('id', row.id)
-        })
+        await processOne(
+          admin,
+          row.icon_url!,
+          table === 'charms' ? 'charm' : 'item',
+          row.id,
+          'Tibia Wiki (Fandom)',
+          async (mediaId) => {
+            await admin.from(tableName).update({ icon_media_id: mediaId }).eq('id', row.id)
+          }
+        )
       }, 5)
       checkpoint.processedIds[row.id] = true
       if (!fixPlaceholders) saveCheckpoint(checkpoint)

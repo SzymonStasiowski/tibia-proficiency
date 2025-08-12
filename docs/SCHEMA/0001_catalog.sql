@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS charms (
   name text UNIQUE NOT NULL,
   type text NOT NULL,
   description text,
+  -- Legacy/source icon URL captured by scraper; will be migrated to media
+  icon_url text,
   icon_media_id uuid REFERENCES media(id),
   source_url text
 );
